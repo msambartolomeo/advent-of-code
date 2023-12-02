@@ -1,36 +1,12 @@
 use std::ops::Deref;
 
-use anyhow::{bail, Context, Ok, Result};
-
-fn main() -> Result<()> {
-    let input = include_str!("../input1.txt");
-
-    let bag = Bag {
-        red: 12,
-        green: 13,
-        blue: 14,
-    };
-
-    let games: Vec<Game> = input
-        .lines()
-        .map(|s| parse_game(s))
-        .collect::<Result<_>>()?;
-
-    let sum: u32 = games
-        .into_iter()
-        .filter(|g| g.iter().all(|b| b.is_contained(&bag)))
-        .map(|g| g.get_id())
-        .sum();
-
-    println!("The sum of the ids of the valid games is {sum}");
-
-    Ok(())
-}
+use anyhow::{bail, Context, Result};
 
 /// A game of the Cubes Game
 /// Each game consists of an id and successive cubes pulled out of the bag
 /// Each pull is represented as a bag itself
-struct Game(u32, Vec<Bag>);
+#[derive(Debug, PartialEq, Eq)]
+pub struct Game(u32, Vec<Bag>);
 
 impl Deref for Game {
     type Target = Vec<Bag>;
@@ -41,29 +17,39 @@ impl Deref for Game {
 }
 
 impl Game {
-    fn get_id(&self) -> u32 {
+    pub fn get_id(&self) -> u32 {
         return self.0;
     }
 }
 
 /// A bag from the Cubes Game
 /// Each bag has an ammount of red green and blue cubes
-struct Bag {
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Bag {
     red: u32,
     green: u32,
     blue: u32,
 }
 
 impl Bag {
-    fn is_contained(&self, other: &Bag) -> bool {
+    pub fn new(red: u32, green: u32, blue: u32) -> Self {
+        Bag { red, green, blue }
+    }
+
+    pub fn is_contained(&self, other: &Bag) -> bool {
         self.red <= other.red && self.green <= other.green && self.blue <= other.blue
     }
 }
 
-enum Color {
+#[derive(Debug, PartialEq, Eq)]
+pub enum Color {
     Red,
     Green,
     Blue,
+}
+
+pub fn parse_games(games: &str) -> Result<Vec<Game>> {
+    games.lines().map(|s| parse_game(s)).collect()
 }
 
 /// Parses a Cubes Game
@@ -95,11 +81,7 @@ fn parse_game(game: &str) -> Result<Game> {
 /// 3 blue, 4 red, 8 green
 #[inline]
 fn parse_bag(cubes: &str) -> Result<Bag> {
-    let mut bag = Bag {
-        red: 0,
-        green: 0,
-        blue: 0,
-    };
+    let mut bag = Bag::default();
 
     let colored_cubes = cubes.split(",").map(|s| parse_colored_cubes(s));
 
@@ -138,4 +120,46 @@ fn parse_colored_cubes(cubes: &str) -> Result<(Color, u32)> {
     let n: u32 = n.parse().context("Should be a number")?;
 
     Ok((color, n))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_colored_cubes() {
+        let input = "3 blue";
+
+        let result = parse_colored_cubes(input).expect("Invalid input");
+
+        let (color, n) = result;
+
+        assert_eq!(Color::Blue, color);
+        assert_eq!(3, n);
+    }
+
+    #[test]
+    fn test_bag() {
+        let input = "3 blue, 4 red, 8 green";
+
+        let result = parse_bag(input).expect("Invalid input");
+
+        let expected = Bag::new(4, 8, 3);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_game() {
+        let input = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
+
+        let result = parse_game(input).expect("Invalid input");
+
+        let expected = Game(
+            1,
+            vec![Bag::new(4, 0, 3), Bag::new(1, 2, 6), Bag::new(0, 2, 0)],
+        );
+
+        assert_eq!(expected, result);
+    }
 }
