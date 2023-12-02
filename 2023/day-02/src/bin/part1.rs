@@ -1,26 +1,28 @@
 use anyhow::Result;
-use day_02::{Bag, Game};
+use day_02::Bag;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
 
-    let games = day_02::parse_games(input)?;
-
-    let result = process(&games);
+    let result = process(input)?;
 
     println!("{result}");
 
     Ok(())
 }
 
-fn process(games: &[Game]) -> u32 {
+fn process(input: &str) -> Result<u32> {
     let bag = Bag::new(12, 13, 14);
 
-    games
+    let games = day_02::parse_games(input)?;
+
+    let result = games
         .into_iter()
         .filter(|g| g.iter().all(|b| b.is_contained(&bag)))
         .map(|g| g.get_id())
-        .sum()
+        .sum();
+
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -35,9 +37,7 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green";
 
-        let games = day_02::parse_games(input).expect("Invalid input");
-
-        let result = process(&games);
+        let result = process(input).expect("Errors during process");
 
         assert_eq!(8, result);
     }
