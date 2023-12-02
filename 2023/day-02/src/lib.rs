@@ -2,13 +2,13 @@ use std::ops::Deref;
 
 use anyhow::{bail, Context, Result};
 
-/// A game of the Cubes Game
+/// A game of the Cube Conundrum
 /// Each game consists of an id and successive cubes pulled out of the bag
 /// Each pull is represented as a bag itself
 #[derive(Debug, PartialEq, Eq)]
-pub struct Game(u32, Vec<Bag>);
+pub struct CubeConundrum(u32, Vec<Bag>);
 
-impl Deref for Game {
+impl Deref for CubeConundrum {
     type Target = Vec<Bag>;
 
     fn deref(&self) -> &Self::Target {
@@ -16,7 +16,7 @@ impl Deref for Game {
     }
 }
 
-impl Game {
+impl CubeConundrum {
     #[must_use]
     pub fn get_id(&self) -> u32 {
         self.0
@@ -34,7 +34,7 @@ impl Game {
     }
 }
 
-/// A bag from the Cubes Game
+/// A bag from the Cube Conundrum game
 /// Each bag has an ammount of red green and blue cubes
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Bag {
@@ -73,7 +73,7 @@ pub enum Color {
     Blue,
 }
 
-/// Parses a List of Cubes game
+/// Parses a List of Cube Conundrum games
 ///
 /// Each game is an id and then a list of plays taking boxes out of a bag
 ///
@@ -88,15 +88,15 @@ pub enum Color {
 /// # Errors
 ///
 /// The funcion can fail if the string does not follow the example
-pub fn parse_games(games: &str) -> Result<Vec<Game>> {
+pub fn parse_games(games: &str) -> Result<Vec<CubeConundrum>> {
     games.lines().map(parse_game).collect()
 }
 
-/// Parses a Cubes Game
+/// Parses a Cube Conundrum game
 /// Example Input:
 /// Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
 /// The number before ':' is the id, then we have a ';' separated list of bags
-fn parse_game(game: &str) -> Result<Game> {
+fn parse_game(game: &str) -> Result<CubeConundrum> {
     let (id, bags) = game
         .split_once(':')
         .context("The ':' must separate the id from the bags")?;
@@ -110,7 +110,7 @@ fn parse_game(game: &str) -> Result<Game> {
 
     let bags: Vec<Bag> = bags.split(';').map(parse_bag).collect::<Result<_>>()?;
 
-    Ok(Game(id, bags))
+    Ok(CubeConundrum(id, bags))
 }
 
 /// Parses a bag
@@ -204,7 +204,7 @@ mod tests {
 
         let result = parse_game(input).expect("Invalid input");
 
-        let expected = Game(
+        let expected = CubeConundrum(
             1,
             vec![Bag::new(4, 0, 3), Bag::new(1, 2, 6), Bag::new(0, 2, 0)],
         );
