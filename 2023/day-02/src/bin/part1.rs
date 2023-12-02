@@ -11,6 +11,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[inline]
 fn process(input: &str) -> Result<u32> {
     let bag = Bag::new(12, 13, 14);
 

@@ -10,6 +10,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+#[inline]
 fn process(input: &str) -> Result<u32> {
     let games = day_02::parse_games(input)?;
 

@@ -17,10 +17,12 @@ impl Deref for Game {
 }
 
 impl Game {
+    #[must_use]
     pub fn get_id(&self) -> u32 {
-        return self.0;
+        self.0
     }
 
+    #[must_use]
     pub fn minimum_bag(&self) -> Bag {
         let mut min = Bag::default();
 
@@ -42,20 +44,23 @@ pub struct Bag {
 }
 
 impl Bag {
+    #[must_use]
     pub fn new(red: u32, green: u32, blue: u32) -> Self {
-        Bag { red, green, blue }
+        Self { red, green, blue }
     }
 
-    pub fn is_contained(&self, other: &Bag) -> bool {
+    #[must_use]
+    pub fn is_contained(&self, other: &Self) -> bool {
         self.red <= other.red && self.green <= other.green && self.blue <= other.blue
     }
 
-    pub fn max_mut(&mut self, other: &Bag) {
+    pub fn max_mut(&mut self, other: &Self) {
         self.red = self.red.max(other.red);
         self.green = self.green.max(other.green);
         self.blue = self.blue.max(other.blue);
     }
 
+    #[must_use]
     pub fn power(&self) -> u32 {
         self.red * self.green * self.blue
     }
@@ -68,8 +73,23 @@ pub enum Color {
     Blue,
 }
 
+/// Parses a List of Cubes game
+///
+/// Each game is an id and then a list of plays taking boxes out of a bag
+///
+/// # Input example
+///
+/// Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green\n
+/// Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue\n
+/// Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red\n
+/// Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red\n
+/// Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green\n
+///
+/// # Errors
+///
+/// The funcion can fail if the string does not follow the example
 pub fn parse_games(games: &str) -> Result<Vec<Game>> {
-    games.lines().map(|s| parse_game(s)).collect()
+    games.lines().map(parse_game).collect()
 }
 
 /// Parses a Cubes Game
@@ -78,20 +98,17 @@ pub fn parse_games(games: &str) -> Result<Vec<Game>> {
 /// The number before ':' is the id, then we have a ';' separated list of bags
 fn parse_game(game: &str) -> Result<Game> {
     let (id, bags) = game
-        .split_once(":")
+        .split_once(':')
         .context("The ':' must separate the id from the bags")?;
 
     let id: u32 = id
         .trim()
-        .split_once(" ")
+        .split_once(' ')
         .context("The id must be 'Game n'")?
         .1
         .parse()?;
 
-    let bags: Vec<Bag> = bags
-        .split(";")
-        .map(|s| parse_bag(s))
-        .collect::<Result<_>>()?;
+    let bags: Vec<Bag> = bags.split(';').map(parse_bag).collect::<Result<_>>()?;
 
     Ok(Game(id, bags))
 }
@@ -103,7 +120,7 @@ fn parse_game(game: &str) -> Result<Game> {
 fn parse_bag(cubes: &str) -> Result<Bag> {
     let mut bag = Bag::default();
 
-    let colored_cubes = cubes.split(",").map(|s| parse_colored_cubes(s));
+    let colored_cubes = cubes.split(',').map(parse_colored_cubes);
 
     for cubes in colored_cubes {
         let (color, n) = cubes?;
@@ -127,7 +144,7 @@ fn parse_bag(cubes: &str) -> Result<Bag> {
 fn parse_colored_cubes(cubes: &str) -> Result<(Color, u32)> {
     let (n, color) = cubes
         .trim()
-        .split_once(" ")
+        .split_once(' ')
         .context("Cubes string should only have one space")?;
 
     let color = match color {
