@@ -20,6 +20,16 @@ impl Game {
     pub fn get_id(&self) -> u32 {
         return self.0;
     }
+
+    pub fn minimum_bag(&self) -> Bag {
+        let mut min = Bag::default();
+
+        for bag in self.iter() {
+            min.max_mut(bag);
+        }
+
+        min
+    }
 }
 
 /// A bag from the Cubes Game
@@ -38,6 +48,16 @@ impl Bag {
 
     pub fn is_contained(&self, other: &Bag) -> bool {
         self.red <= other.red && self.green <= other.green && self.blue <= other.blue
+    }
+
+    pub fn max_mut(&mut self, other: &Bag) {
+        self.red = self.red.max(other.red);
+        self.green = self.green.max(other.green);
+        self.blue = self.blue.max(other.blue);
+    }
+
+    pub fn power(&self) -> u32 {
+        self.red * self.green * self.blue
     }
 }
 
@@ -150,6 +170,18 @@ mod tests {
     }
 
     #[test]
+    fn test_min_bag() {
+        let mut b1 = Bag::new(6, 3, 1);
+        let b2 = Bag::new(1, 2, 2);
+
+        b1.max_mut(&b2);
+
+        let expected = Bag::new(6, 3, 2);
+
+        assert_eq!(expected, b1);
+    }
+
+    #[test]
     fn test_game() {
         let input = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
 
@@ -161,5 +193,18 @@ mod tests {
         );
 
         assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_min_game() {
+        let input = "Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green";
+
+        let game = parse_game(input).expect("Invalid input");
+
+        let bag = game.minimum_bag();
+
+        let expected = Bag::new(4, 2, 6);
+
+        assert_eq!(expected, bag);
     }
 }
