@@ -17,7 +17,7 @@ fn process(input: &str) -> Result<u64> {
     let result = schematic
         .symbols
         .iter()
-        .flat_map(|p| p.gear_ratio(&schematic.parts))
+        .filter_map(|p| p.gear_ratio(&schematic.parts))
         .sum();
 
     Ok(result)

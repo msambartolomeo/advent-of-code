@@ -25,7 +25,7 @@ pub struct Position {
 }
 
 impl PartNumber {
-    pub fn new(id: u64, x: usize, y: usize) -> Self {
+    fn new(id: u64, x: usize, y: usize) -> Self {
         let lenght = id.to_string().len();
 
         assert!(x >= lenght, "lenght {lenght}, y {x}");
@@ -35,6 +35,7 @@ impl PartNumber {
         Self { id, positions }
     }
 
+    #[must_use]
     pub fn is_valid(&self, symbols: &[Symbol]) -> bool {
         self.positions
             .iter()
@@ -43,13 +44,14 @@ impl PartNumber {
 }
 
 impl Symbol {
-    pub fn new(c: char, x: usize, y: usize) -> Self {
+    fn new(c: char, x: usize, y: usize) -> Self {
         Self {
             symbol: c,
             position: Position { x, y },
         }
     }
 
+    #[must_use]
     pub fn gear_ratio(&self, parts: &[PartNumber]) -> Option<u64> {
         if self.symbol != '*' {
             // NOTE: if symbol is not *, its not a gear
@@ -91,10 +93,15 @@ impl Position {
         if x > 0 && y > 0 && (x - 1, y - 1) == other {
             return true;
         }
-        return false;
+        false
     }
 }
 
+/// Parses schematic for the gondola lift
+///
+/// # Errors
+///
+/// Returns error if ther is a parsing error
 pub fn parse_schematic(schematic: &str) -> Result<Schematic> {
     let mut symbols: Vec<Symbol> = vec![];
     let mut parts: Vec<PartNumber> = vec![];
@@ -104,28 +111,22 @@ pub fn parse_schematic(schematic: &str) -> Result<Schematic> {
 
         for (x, c) in line.chars().enumerate() {
             if c.is_ascii_digit() {
-                let n = c.to_digit(10).context("is ascii digit")? as u64;
+                let n = u64::from(c.to_digit(10).context("is ascii digit")?);
                 current_number = add_next_ten(current_number, n);
                 continue;
-            } else {
-                match current_number.take() {
-                    Some(n) => {
-                        parts.push(PartNumber::new(n, x, y));
-                    }
-                    None => (),
-                };
             }
+
+            if let Some(n) = current_number.take() {
+                parts.push(PartNumber::new(n, x, y));
+            };
 
             if c != '.' {
                 symbols.push(Symbol::new(c, x, y));
             }
         }
 
-        match current_number.take() {
-            Some(n) => {
-                parts.push(PartNumber::new(n, line.len(), y));
-            }
-            None => (),
+        if let Some(n) = current_number.take() {
+            parts.push(PartNumber::new(n, line.len(), y));
         };
     }
 
