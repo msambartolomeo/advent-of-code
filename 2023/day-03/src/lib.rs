@@ -28,10 +28,6 @@ impl PartNumber {
     pub fn new(id: u64, x: usize, y: usize) -> Self {
         let lenght = id.to_string().len();
 
-        if id == 848 {
-            dbg!(x, y);
-        }
-
         assert!(x >= lenght, "lenght {lenght}, y {x}");
 
         let positions = (x - lenght..x).map(|x| Position { x, y }).collect();
@@ -52,6 +48,26 @@ impl Symbol {
             symbol: c,
             position: Position { x, y },
         }
+    }
+
+    pub fn gear_ratio(&self, parts: &[PartNumber]) -> Option<u64> {
+        if self.symbol != '*' {
+            // NOTE: if symbol is not *, its not a gear
+            return None;
+        }
+
+        let contact_parts: Vec<u64> = parts
+            .iter()
+            .filter(|part| part.positions.iter().any(|p| p.contact(&self.position)))
+            .map(|p| p.id)
+            .collect();
+
+        if contact_parts.len() != 2 {
+            // NOTE: if not two connecting parts, its not a gear
+            return None;
+        }
+
+        Some(contact_parts.iter().product())
     }
 }
 
