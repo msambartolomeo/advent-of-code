@@ -4,13 +4,13 @@ use std::str::FromStr;
 
 use anyhow::{Context, Result};
 
-pub struct Card {
+pub struct ScratchCard {
     pub id: u32,
     pub winning_numbers: HashSet<u32>,
     pub numbers_you_have: HashSet<u32>,
 }
 
-impl Card {
+impl ScratchCard {
     #[must_use]
     pub fn winning_count(&self) -> usize {
         self.numbers_you_have
@@ -28,11 +28,11 @@ impl Card {
 ///
 /// # Errors
 /// Returns Err if the input is invalid
-pub fn parse_cards(input: &str) -> Result<Vec<Card>> {
+pub fn parse_cards(input: &str) -> Result<Vec<ScratchCard>> {
     input.lines().map(parse_card).collect()
 }
 
-fn parse_card(input: &str) -> Result<Card> {
+fn parse_card(input: &str) -> Result<ScratchCard> {
     let (id, numbers) = input.split_once(':').context("Input must have :")?;
 
     let id = id
@@ -49,7 +49,7 @@ fn parse_card(input: &str) -> Result<Card> {
     let winning_numbers = to_numbers(winning_numbers)?;
     let numbers_you_have = to_numbers(numbers_you_have)?;
 
-    Ok(Card {
+    Ok(ScratchCard {
         id,
         winning_numbers,
         numbers_you_have,
