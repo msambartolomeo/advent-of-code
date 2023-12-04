@@ -19,18 +19,12 @@ fn process(input: &str) -> Result<u32> {
         .into_iter()
         .enumerate()
         .map(|(idx, c)| {
-            let winning_count = c
-                .numbers_you_have
-                .into_iter()
-                .filter(|n| c.winning_numbers.contains(n))
-                .count();
-
             let current_card_quantity = card_quantity[idx];
 
             card_quantity
                 .iter_mut()
                 .skip(idx + 1)
-                .take(winning_count)
+                .take(c.winning_count())
                 .for_each(|q| *q += current_card_quantity);
 
             current_card_quantity

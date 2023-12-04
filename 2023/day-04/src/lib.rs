@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::num::ParseIntError;
 use std::str::FromStr;
 
@@ -5,8 +6,16 @@ use anyhow::{Context, Result};
 
 pub struct Card {
     pub id: u32,
-    pub winning_numbers: Vec<u32>,
-    pub numbers_you_have: Vec<u32>,
+    pub winning_numbers: HashSet<u32>,
+    pub numbers_you_have: HashSet<u32>,
+}
+
+impl Card {
+    pub fn winning_count(&self) -> usize {
+        self.numbers_you_have
+            .intersection(&self.winning_numbers)
+            .count()
+    }
 }
 
 /// Parses an of cards
@@ -47,6 +56,6 @@ fn parse_card(input: &str) -> Result<Card> {
 }
 
 #[inline]
-fn to_numbers(string: &str) -> Result<Vec<u32>, ParseIntError> {
+fn to_numbers(string: &str) -> Result<HashSet<u32>, ParseIntError> {
     string.split_whitespace().map(u32::from_str).collect()
 }

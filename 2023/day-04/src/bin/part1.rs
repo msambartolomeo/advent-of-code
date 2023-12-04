@@ -16,18 +16,10 @@ fn process(input: &str) -> Result<u32> {
 
     let result = cards
         .into_iter()
-        .map(|c| {
-            let winning_count = c
-                .numbers_you_have
-                .into_iter()
-                .filter(|n| c.winning_numbers.contains(n))
-                .count();
-
-            match u32::try_from(winning_count) {
-                Ok(0) => Ok(0),
-                Ok(n) => Ok(2u32.pow(n - 1)),
-                Err(e) => Err(e),
-            }
+        .map(|c| match u32::try_from(c.winning_count()) {
+            Ok(0) => Ok(0),
+            Ok(n) => Ok(2u32.pow(n - 1)),
+            Err(e) => Err(e),
         })
         .sum::<Result<u32, _>>()?;
 
