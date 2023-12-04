@@ -1,14 +1,14 @@
 use std::ops::{Deref, DerefMut};
 
-use anyhow::{bail, Ok, Result};
+use anyhow::Result;
 
 #[derive(Debug)]
 pub struct CalibrationDocument(Vec<CalibrationValue>);
 
 #[derive(Debug)]
 pub struct CalibrationValue {
-    pub number: u32,
-    pub word: String,
+    pub number: String,
+    pub all: String,
 }
 
 impl Deref for CalibrationDocument {
@@ -36,22 +36,17 @@ pub fn parse_calibration_document(input: &str) -> Result<CalibrationDocument> {
 
 fn parse_calibration_value(input: &str) -> Result<CalibrationValue> {
     let mut number = String::new();
-    let mut word = String::new();
 
     input.split_inclusive(|c: char| c.is_ascii_digit());
 
     for char in input.chars() {
-        match char {
-            '0'..='9' => number.push(char),
-            'a'..='z' => word.push(char),
-            _ => bail!("Invalid in input string character"),
+        if let '0'..='9' = char {
+            number.push(char);
         }
     }
 
-    let first = number.chars().next().unwrap().to_digit(10).unwrap();
-    let last = number.chars().last().unwrap().to_digit(10).unwrap();
-
-    let number = first * 10 + last;
-
-    Ok(CalibrationValue { number, word })
+    Ok(CalibrationValue {
+        number,
+        all: input.to_owned(),
+    })
 }
