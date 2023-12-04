@@ -9,6 +9,15 @@ pub struct Card {
     pub numbers_you_have: Vec<u32>,
 }
 
+/// Parses an of cards
+///
+/// Example input:
+/// Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
+/// Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
+/// ...
+///
+/// # Errors
+/// Returns Err if the input is invalid
 pub fn parse_cards(input: &str) -> Result<Vec<Card>> {
     input.lines().map(parse_card).collect()
 }

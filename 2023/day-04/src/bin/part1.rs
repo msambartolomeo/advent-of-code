@@ -19,16 +19,17 @@ fn process(input: &str) -> Result<u32> {
         .map(|c| {
             let winning_count = c
                 .numbers_you_have
-                .iter()
+                .into_iter()
                 .filter(|n| c.winning_numbers.contains(n))
-                .count() as u32;
+                .count();
 
-            match winning_count {
-                0 => 0,
-                n => 2u32.pow(n - 1),
+            match u32::try_from(winning_count) {
+                Ok(0) => Ok(0),
+                Ok(n) => Ok(2u32.pow(n - 1)),
+                Err(e) => Err(e),
             }
         })
-        .sum();
+        .sum::<Result<u32, _>>()?;
 
     Ok(result)
 }

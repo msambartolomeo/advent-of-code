@@ -27,11 +27,13 @@ fn process(input: &str) -> Result<u32> {
 
             let current_card_quantity = card_quantity[idx];
 
-            for i in idx + 1..=idx + winning_count {
-                card_quantity[i] += current_card_quantity;
-            }
+            card_quantity
+                .iter_mut()
+                .skip(idx + 1)
+                .take(winning_count)
+                .for_each(|q| *q += current_card_quantity);
 
-            card_quantity[idx]
+            current_card_quantity
         })
         .sum();
 
