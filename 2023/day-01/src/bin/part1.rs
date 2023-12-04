@@ -1,20 +1,34 @@
-use anyhow::Result;
-
-fn main() -> Result<()> {
+fn main() {
     let input = include_str!("../../input.txt");
 
-    let result = process(input)?;
+    let result = process(input);
 
     println!("{result}");
-
-    Ok(())
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
-    let document = day_01::parse_calibration_document(input)?;
+fn process(input: &str) -> u32 {
+    let document = day_01::parse_calibration_document(input);
 
-    Ok(document.iter().map(|s| day_01::get_number_value(&s)).sum())
+    document.iter().map(|s| get_number_value(s)).sum()
+}
+
+#[must_use]
+fn get_number_value(tainted_value: &str) -> u32 {
+    let mut numbers = vec![];
+
+    for char in tainted_value.chars() {
+        let n = char.to_digit(10);
+
+        if let Some(n) = n {
+            numbers.push(n);
+        }
+    }
+
+    let first = numbers.first().unwrap();
+    let last = numbers.last().unwrap();
+
+    first * 10 + last
 }
 
 #[cfg(test)]
@@ -28,7 +42,7 @@ pqr3stu8vwx
 a1b2c3d4e5f
 treb7uchet";
 
-        let result = process(input).expect("Process failure");
+        let result = process(input);
 
         assert_eq!(142, result);
     }

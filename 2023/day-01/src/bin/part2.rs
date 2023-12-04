@@ -1,28 +1,31 @@
-use anyhow::Result;
+use day_01::NumberIterator;
 
-fn main() -> Result<()> {
+fn main() {
     let input = include_str!("../../input.txt");
 
-    let result = process(input)?;
+    let result = process(input);
 
     println!("{result}");
-
-    Ok(())
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
-    let document = day_01::parse_calibration_document(input)?;
+fn process(input: &str) -> u32 {
+    let document = day_01::parse_calibration_document(input);
 
-    Ok(document
-        .iter()
-        .map(|s| {
-            println!("{s}");
-            let n = day_01::get_real_value(&s);
-            println!("{n}");
-            n
-        })
-        .sum())
+    document.iter().map(|s| get_real_value(s)).sum()
+}
+
+#[must_use]
+fn get_real_value(tainted_value: &str) -> u32 {
+    let mut it: NumberIterator = tainted_value.into();
+
+    let first = it.next().expect("at least one number in the input");
+    let last = match it.last() {
+        Some(n) => n,
+        None => first,
+    };
+
+    first * 10 + last
 }
 
 #[cfg(test)]
@@ -39,7 +42,7 @@ xtwone3four
 zoneight234
 7pqrstsixteen";
 
-        let result = process(input).expect("Process failure");
+        let result = process(input);
 
         assert_eq!(281, result);
     }
