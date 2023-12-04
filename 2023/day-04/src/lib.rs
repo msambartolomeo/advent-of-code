@@ -11,6 +11,7 @@ pub struct Card {
 }
 
 impl Card {
+    #[must_use]
     pub fn winning_count(&self) -> usize {
         self.numbers_you_have
             .intersection(&self.winning_numbers)
