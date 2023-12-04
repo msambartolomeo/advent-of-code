@@ -14,17 +14,7 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u32> {
     let document = day_01::parse_calibration_document(input)?;
 
-    Ok(document
-        .iter()
-        .map(|d| first_and_last_number(&d.number))
-        .sum())
-}
-
-fn first_and_last_number(n: &str) -> u32 {
-    let first = n.chars().next().unwrap().to_digit(10).unwrap();
-    let last = n.chars().last().unwrap().to_digit(10).unwrap();
-
-    first * 10 + last
+    Ok(document.iter().map(|s| day_01::get_number_value(&s)).sum())
 }
 
 #[cfg(test)]

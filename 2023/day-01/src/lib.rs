@@ -3,16 +3,10 @@ use std::ops::{Deref, DerefMut};
 use anyhow::Result;
 
 #[derive(Debug)]
-pub struct CalibrationDocument(Vec<CalibrationValue>);
-
-#[derive(Debug)]
-pub struct CalibrationValue {
-    pub number: String,
-    pub all: String,
-}
+pub struct CalibrationDocument(Vec<String>);
 
 impl Deref for CalibrationDocument {
-    type Target = Vec<CalibrationValue>;
+    type Target = Vec<String>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
@@ -26,27 +20,24 @@ impl DerefMut for CalibrationDocument {
 }
 
 pub fn parse_calibration_document(input: &str) -> Result<CalibrationDocument> {
-    let documents = input
-        .lines()
-        .map(parse_calibration_value)
-        .collect::<Result<Vec<CalibrationValue>>>()?;
+    let documents = input.lines().map(|l| l.to_owned()).collect();
 
     Ok(CalibrationDocument(documents))
 }
 
-fn parse_calibration_value(input: &str) -> Result<CalibrationValue> {
-    let mut number = String::new();
+pub fn get_number_value(tainted_value: &str) -> u32 {
+    let mut number = vec![];
 
-    input.split_inclusive(|c: char| c.is_ascii_digit());
+    for char in tainted_value.chars() {
+        let n = char.to_digit(10);
 
-    for char in input.chars() {
-        if let '0'..='9' = char {
-            number.push(char);
+        if let Some(n) = n {
+            number.push(n);
         }
     }
 
-    Ok(CalibrationValue {
-        number,
-        all: input.to_owned(),
-    })
+    let first = number.iter().next().unwrap();
+    let last = number.iter().last().unwrap();
+
+    first * 10 + last
 }
