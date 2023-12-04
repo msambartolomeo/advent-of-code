@@ -1,27 +1,42 @@
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 
 #[derive(Debug)]
-pub struct CalibrationDocument(Vec<String>);
+pub struct CalibrationDocument<'a>(Vec<TaintedCalibrationValue<'a>>);
 
-impl Deref for CalibrationDocument {
-    type Target = Vec<String>;
+impl<'a> Deref for CalibrationDocument<'a> {
+    type Target = Vec<TaintedCalibrationValue<'a>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl DerefMut for CalibrationDocument {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
+#[derive(Debug, Clone, Copy)]
+pub struct TaintedCalibrationValue<'a>(&'a str);
+
+impl<'a> TaintedCalibrationValue<'a> {
+    #[must_use]
+    pub fn numbers(&self) -> NumberIterator<'a> {
+        NumberIterator(self)
     }
 }
 
-#[must_use]
-pub fn parse_calibration_document(input: &str) -> CalibrationDocument {
-    let documents = input.lines().map(ToOwned::to_owned).collect();
+impl<'a> Deref for TaintedCalibrationValue<'a> {
+    type Target = &'a str;
 
-    CalibrationDocument(documents)
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a> IntoIterator for TaintedCalibrationValue<'a> {
+    type Item = u32;
+
+    type IntoIter = NumberIterator<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.numbers()
+    }
 }
 
 pub struct NumberIterator<'a>(&'a str);
@@ -64,8 +79,9 @@ impl<'a> Iterator for NumberIterator<'a> {
     }
 }
 
-impl<'a> From<&'a str> for NumberIterator<'a> {
-    fn from(value: &'a str) -> Self {
-        NumberIterator(value)
-    }
+#[must_use]
+pub fn parse_calibration_document(input: &str) -> CalibrationDocument {
+    let documents = input.lines().map(TaintedCalibrationValue).collect();
+
+    CalibrationDocument(documents)
 }

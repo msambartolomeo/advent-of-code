@@ -1,4 +1,4 @@
-use day_01::NumberIterator;
+use day_01::TaintedCalibrationValue;
 
 fn main() {
     let input = include_str!("../../input.txt");
@@ -16,8 +16,8 @@ fn process(input: &str) -> u32 {
 }
 
 #[must_use]
-fn get_real_value(tainted_value: &str) -> u32 {
-    let mut it: NumberIterator = tainted_value.into();
+fn get_real_value(tainted_value: &TaintedCalibrationValue) -> u32 {
+    let mut it = tainted_value.numbers();
 
     let first = it.next().expect("at least one number in the input");
     let last = match it.last() {

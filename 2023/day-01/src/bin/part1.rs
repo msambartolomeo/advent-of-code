@@ -1,3 +1,5 @@
+use day_01::TaintedCalibrationValue;
+
 fn main() {
     let input = include_str!("../../input.txt");
 
@@ -14,7 +16,7 @@ fn process(input: &str) -> u32 {
 }
 
 #[must_use]
-fn get_number_value(tainted_value: &str) -> u32 {
+fn get_number_value(tainted_value: &TaintedCalibrationValue) -> u32 {
     let mut numbers = vec![];
 
     for char in tainted_value.chars() {
