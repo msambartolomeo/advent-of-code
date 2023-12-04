@@ -13,23 +13,23 @@ fn main() -> Result<()> {
 #[inline]
 fn process(input: &str) -> Result<u32> {
     let cards = day_04::parse_cards(input)?;
-    let mut card_quantity = vec![1; cards.len()];
+    let card_counts = vec![1; cards.len()];
 
-    let result = cards
-        .into_iter()
-        .enumerate()
-        .map(|(idx, c)| {
-            let current_card_quantity = card_quantity[idx];
+    let (result, _) =
+        cards
+            .into_iter()
+            .enumerate()
+            .fold((0, card_counts), |(acc, mut card_counts), (idx, c)| {
+                let current_count = card_counts[idx];
 
-            card_quantity
-                .iter_mut()
-                .skip(idx + 1)
-                .take(c.winning_count())
-                .for_each(|q| *q += current_card_quantity);
+                card_counts
+                    .iter_mut()
+                    .skip(idx + 1)
+                    .take(c.winning_count())
+                    .for_each(|q| *q += current_count);
 
-            current_card_quantity
-        })
-        .sum();
+                (acc + current_count, card_counts)
+            });
 
     Ok(result)
 }
