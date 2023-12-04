@@ -1,6 +1,4 @@
 use std::collections::HashSet;
-use std::num::ParseIntError;
-use std::str::FromStr;
 
 use anyhow::{Context, Result};
 
@@ -28,8 +26,8 @@ impl ScratchCard {
 ///
 /// # Errors
 /// Returns Err if the input is invalid
-pub fn parse_cards(input: &str) -> Result<Vec<ScratchCard>> {
-    input.lines().map(parse_card).collect()
+pub fn parse_cards(input: &str) -> impl Iterator<Item = Result<ScratchCard>> + '_ {
+    input.lines().map(parse_card)
 }
 
 fn parse_card(input: &str) -> Result<ScratchCard> {
@@ -57,6 +55,6 @@ fn parse_card(input: &str) -> Result<ScratchCard> {
 }
 
 #[inline]
-fn to_numbers(string: &str) -> Result<HashSet<u32>, ParseIntError> {
-    string.split_whitespace().map(u32::from_str).collect()
+fn to_numbers(string: &str) -> Result<HashSet<u32>> {
+    string.split_whitespace().map(|s| Ok(s.parse()?)).collect()
 }

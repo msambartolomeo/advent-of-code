@@ -1,4 +1,7 @@
+use std::collections::VecDeque;
+
 use anyhow::Result;
+use itertools::Itertools;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -12,24 +15,26 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u32> {
-    let cards = day_04::parse_cards(input)?;
-    let card_counts = vec![1; cards.len()];
+    let cards = day_04::parse_cards(input);
 
-    let (result, _) =
-        cards
-            .into_iter()
-            .enumerate()
-            .fold((0, card_counts), |(acc, mut card_counts), (idx, c)| {
-                let current_count = card_counts[idx];
+    let (result, _) = cards.process_results(|it| {
+        it.fold((0, VecDeque::new()), |(acc, mut card_counts), c| {
+            let current_count = card_counts.pop_front().unwrap_or(1);
+            let len = card_counts.len();
+            let winning_count = c.winning_count();
 
-                card_counts
-                    .iter_mut()
-                    .skip(idx + 1)
-                    .take(c.winning_count())
-                    .for_each(|q| *q += current_count);
+            card_counts
+                .iter_mut()
+                .take(winning_count)
+                .for_each(|q| *q += current_count);
 
-                (acc + current_count, card_counts)
-            });
+            if len <= winning_count {
+                card_counts.extend(std::iter::repeat(1 + current_count).take(winning_count - len))
+            }
+
+            (acc + current_count, card_counts)
+        })
+    })?;
 
     Ok(result)
 }

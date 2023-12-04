@@ -12,16 +12,14 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u32> {
-    let cards = day_04::parse_cards(input)?;
+    let cards = day_04::parse_cards(input);
 
     let result = cards
-        .into_iter()
-        .map(|c| match u32::try_from(c.winning_count()) {
-            Ok(0) => Ok(0),
-            Ok(n) => Ok(2u32.pow(n - 1)),
-            Err(e) => Err(e),
+        .map(|c| match u32::try_from(c?.winning_count())? {
+            0 => Ok(0),
+            n => Ok(2u32.pow(n - 1)),
         })
-        .sum::<Result<u32, _>>()?;
+        .sum::<Result<u32>>()?;
 
     Ok(result)
 }
