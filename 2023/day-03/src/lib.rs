@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, num::TryFromIntError};
 
 use anyhow::{Context, Result};
 
@@ -32,13 +32,24 @@ impl From<(usize, usize)> for Position {
     }
 }
 
+impl TryFrom<(i128, i128)> for Position {
+    type Error = TryFromIntError;
+
+    fn try_from((x, y): (i128, i128)) -> Result<Self, Self::Error> {
+        Ok(Position {
+            x: x.try_into()?,
+            y: y.try_into()?,
+        })
+    }
+}
+
 impl PartNumber {
     fn new(id: u64, x: usize, y: usize) -> Self {
         let lenght = id.to_string().len();
 
         assert!(x >= lenght, "lenght {lenght}, y {x}");
 
-        let positions = (x - lenght..x).map(|x| Position { x, y }).collect();
+        let positions = (x - lenght..x).map(|x| (x, y).into()).collect();
 
         Self { id, positions }
     }
@@ -55,7 +66,7 @@ impl Symbol {
     fn new(c: char, x: usize, y: usize) -> Self {
         Self {
             symbol: c,
-            position: Position { x, y },
+            position: (x, y).into(),
         }
     }
 
@@ -90,31 +101,38 @@ impl Symbol {
 
 #[must_use]
 fn adjacent_positions(positions: &[Position]) -> HashSet<Position> {
-    let position_count = positions.len();
+    let west_idx = 0;
+    let east_idx = positions.len() - 1;
 
-    let mut set: HashSet<Position> = HashSet::with_capacity(6 + 2 * position_count);
+    let mut set: HashSet<Position> = HashSet::with_capacity(6 + 2 * positions.len());
 
     for (idx, position) in positions.iter().enumerate() {
-        let (x, y) = (position.x, position.y);
+        // NOTE: Cast positions as signed to prevent panics
+        let (x, y) = (position.x as i128, position.y as i128);
 
-        set.insert((x, y + 1).into());
+        // NOTE: In every position add north and south borders
+        set.extend(
+            [(x, y + 1), (x, y - 1)]
+                .into_iter()
+                .filter_map(|p| TryInto::<Position>::try_into(p).ok()),
+        );
 
-        if y > 0 {
-            set.insert((x, y - 1).into());
-        }
-
-        if idx == 0 && x > 0 {
-            set.extend([(x - 1, y).into(), (x - 1, y + 1).into()].iter());
-            if y > 0 {
-                set.insert((x - 1, y - 1).into());
-            }
+        // NOTE: On the first position add west border
+        if idx == west_idx {
+            set.extend(
+                [(x - 1, y), (x - 1, y + 1), (x - 1, y - 1)]
+                    .into_iter()
+                    .filter_map(|p| TryInto::<Position>::try_into(p).ok()),
+            );
         };
 
-        if idx == position_count - 1 {
-            set.extend([(x + 1, y).into(), (x + 1, y + 1).into()].iter());
-            if y > 0 {
-                set.insert((x + 1, y - 1).into());
-            }
+        // NOTE: On the last position add east border
+        if idx == east_idx {
+            set.extend(
+                [(x + 1, y), (x + 1, y + 1), (x + 1, y - 1)]
+                    .into_iter()
+                    .filter_map(|p| TryInto::<Position>::try_into(p).ok()),
+            );
         }
     }
 
@@ -136,7 +154,7 @@ pub fn parse_schematic(schematic: &str) -> Result<Schematic> {
         for (x, c) in line.chars().enumerate() {
             if c.is_ascii_digit() {
                 let n = u64::from(c.to_digit(10).context("is ascii digit")?);
-                _ = current_number.insert(add_next_ten(current_number, n));
+                current_number.replace(add_next_ten(current_number, n));
                 continue;
             }
 
@@ -175,7 +193,7 @@ mod tests {
 
         let m = 6;
 
-        _ = n.insert(add_next_ten(n, m));
+        n.replace(add_next_ten(n, m));
 
         let m = 7;
 
