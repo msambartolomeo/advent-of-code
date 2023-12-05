@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::{Context, Result};
 
 #[derive(Debug)]
@@ -18,10 +20,16 @@ pub struct Symbol {
     pub position: Position,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct Position {
     pub x: usize,
     pub y: usize,
+}
+
+impl From<(usize, usize)> for Position {
+    fn from((x, y): (usize, usize)) -> Self {
+        Position { x, y }
+    }
 }
 
 impl PartNumber {
@@ -37,9 +45,9 @@ impl PartNumber {
 
     #[must_use]
     pub fn is_valid(&self, symbols: &[Symbol]) -> bool {
-        self.positions
-            .iter()
-            .any(|p| symbols.iter().any(|s| p.contact(&s.position)))
+        let adj = adjacent_positions(&self.positions);
+
+        symbols.iter().any(|s| adj.contains(&s.position))
     }
 }
 
@@ -58,10 +66,17 @@ impl Symbol {
             return None;
         }
 
+        let adj = adjacent_positions(&[self.position]);
+
         let contact_parts: Vec<u64> = parts
             .iter()
-            .filter(|part| part.positions.iter().any(|p| p.contact(&self.position)))
-            .map(|p| p.id)
+            .filter_map(|part| {
+                if part.positions.iter().any(|p| adj.contains(p)) {
+                    Some(part.id)
+                } else {
+                    None
+                }
+            })
             .collect();
 
         if contact_parts.len() != 2 {
@@ -73,28 +88,37 @@ impl Symbol {
     }
 }
 
-impl Position {
-    fn contact(&self, other: &Self) -> bool {
-        let (x, y) = (self.x, self.y);
-        let other = (other.x, other.y);
+#[must_use]
+fn adjacent_positions(positions: &[Position]) -> HashSet<Position> {
+    let position_count = positions.len();
 
-        if [(x, y + 1), (x + 1, y), (x + 1, y + 1)].contains(&other) {
-            return true;
+    let mut set: HashSet<Position> = HashSet::with_capacity(6 + 2 * position_count);
+
+    for (idx, position) in positions.iter().enumerate() {
+        let (x, y) = (position.x, position.y);
+
+        set.insert((x, y + 1).into());
+
+        if y > 0 {
+            set.insert((x, y - 1).into());
         }
 
-        if x > 0 && [(x - 1, y), (x - 1, y + 1)].contains(&other) {
-            return true;
-        }
+        if idx == 0 && x > 0 {
+            set.extend([(x - 1, y).into(), (x - 1, y + 1).into()].iter());
+            if y > 0 {
+                set.insert((x - 1, y - 1).into());
+            }
+        };
 
-        if y > 0 && [(x, y - 1), (x + 1, y - 1)].contains(&other) {
-            return true;
+        if idx == position_count - 1 {
+            set.extend([(x + 1, y).into(), (x + 1, y + 1).into()].iter());
+            if y > 0 {
+                set.insert((x + 1, y - 1).into());
+            }
         }
-
-        if x > 0 && y > 0 && (x - 1, y - 1) == other {
-            return true;
-        }
-        false
     }
+
+    set
 }
 
 /// Parses schematic for the gondola lift
@@ -112,7 +136,7 @@ pub fn parse_schematic(schematic: &str) -> Result<Schematic> {
         for (x, c) in line.chars().enumerate() {
             if c.is_ascii_digit() {
                 let n = u64::from(c.to_digit(10).context("is ascii digit")?);
-                current_number = add_next_ten(current_number, n);
+                _ = current_number.insert(add_next_ten(current_number, n));
                 continue;
             }
 
@@ -133,10 +157,11 @@ pub fn parse_schematic(schematic: &str) -> Result<Schematic> {
     Ok(Schematic { parts, symbols })
 }
 
-fn add_next_ten(n: Option<u64>, m: u64) -> Option<u64> {
+#[must_use]
+fn add_next_ten(n: Option<u64>, m: u64) -> u64 {
     match n {
-        Some(n) => Some(n * 10 + m),
-        None => Some(m),
+        Some(n) => n * 10 + m,
+        None => m,
     }
 }
 
@@ -146,16 +171,16 @@ mod tests {
 
     #[test]
     fn test_add_next_ten() {
-        let n = Some(4);
+        let mut n = Some(4);
 
         let m = 6;
 
-        let n = add_next_ten(n, m);
+        _ = n.insert(add_next_ten(n, m));
 
         let m = 7;
 
         let result = add_next_ten(n, m);
 
-        assert_eq!(Some(467), result);
+        assert_eq!(467, result);
     }
 }
