@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use anyhow::{bail, ensure, Context, Error, Ok, Result};
 
 #[derive(Debug)]
@@ -10,31 +12,23 @@ pub struct AlmanacMap {
 impl AlmanacMap {
     #[must_use]
     pub fn convert(&self, number: u64) -> u64 {
-        for converter in &self.converters {
-            if let Some(n) = converter.convert(number) {
-                return n;
-            }
+        let converter = self
+            .converters
+            .iter()
+            .find(|c| c.source_range.contains(&number));
+
+        if let Some(converter) = converter {
+            converter.destination_range.start + number - converter.source_range.start
+        } else {
+            number
         }
-        number
     }
 }
 
 #[derive(Debug)]
 pub struct MapRangeConverter {
-    destination_start: u64,
-    source_start: u64,
-    length: u64,
-}
-
-impl MapRangeConverter {
-    #[must_use]
-    fn convert(&self, number: u64) -> Option<u64> {
-        if number >= self.source_start && number < self.source_start + self.length {
-            Some(self.destination_start + number - self.source_start)
-        } else {
-            None
-        }
-    }
+    destination_range: Range<u64>,
+    source_range: Range<u64>,
 }
 
 impl TryFrom<Vec<u64>> for MapRangeConverter {
@@ -43,10 +37,13 @@ impl TryFrom<Vec<u64>> for MapRangeConverter {
     fn try_from(value: Vec<u64>) -> Result<Self, Self::Error> {
         ensure!(value.len() >= 3, "Vector should have at least 3 elements");
 
+        let destination_start = value[0];
+        let source_start = value[1];
+        let length = value[2];
+
         Ok(MapRangeConverter {
-            destination_start: value[0],
-            source_start: value[1],
-            length: value[2],
+            destination_range: destination_start..destination_start + length,
+            source_range: source_start..source_start + length,
         })
     }
 }
