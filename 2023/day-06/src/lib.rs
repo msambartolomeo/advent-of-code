@@ -1,25 +1,35 @@
 use anyhow::{ensure, Context, Result};
 
+#[derive(Debug)]
 pub struct BoatRace {
-    pub allowed_time: u32,
-    pub best_distance: u32,
+    pub allowed_time: u64,
+    pub best_distance: u64,
+}
+
+impl From<(u64, u64)> for BoatRace {
+    fn from((allowed_time, best_distance): (u64, u64)) -> Self {
+        BoatRace {
+            allowed_time,
+            best_distance,
+        }
+    }
 }
 
 impl BoatRace {
-    pub fn new(allowed_time: u32, best_distance: u32) -> Self {
+    pub fn new(allowed_time: u64, best_distance: u64) -> Self {
         Self {
             allowed_time,
             best_distance,
         }
     }
 
-    pub fn solve_equation(&self) -> Result<u32> {
+    pub fn solve_equation(&self) -> Result<u64> {
         let time = self.allowed_time as f64;
         let distance = self.best_distance as f64;
 
         let (start, end) = quadratic_formula(1f64, -time, distance)?;
 
-        let (start, end) = (start.floor() as u32, end.ceil() as u32);
+        let (start, end) = (start.floor() as u64, end.ceil() as u64);
 
         Ok(end - 1 - start)
     }
@@ -54,7 +64,7 @@ pub fn parse_boat_races(input: &str) -> Result<Vec<BoatRace>> {
 
     times
         .zip(distances)
-        .map(|(t, d)| Ok(BoatRace::new(t?, d?)))
+        .map(|(t, d)| Ok((t?, d?).into()))
         .collect()
 }
 
@@ -62,7 +72,7 @@ pub fn parse_boat_races(input: &str) -> Result<Vec<BoatRace>> {
 fn parse_line<'a>(
     input: &'a str,
     expected_tag: &'a str,
-) -> Result<impl Iterator<Item = Result<u32>> + 'a> {
+) -> Result<impl Iterator<Item = Result<u64>> + 'a> {
     let (tag, values) = input
         .split_once(':')
         .context("each line must have a : separating tag and content")?;
@@ -72,5 +82,5 @@ fn parse_line<'a>(
     Ok(values
         .trim()
         .split_whitespace()
-        .map(|n| Ok(n.parse::<u32>()?)))
+        .map(|n| Ok(n.parse::<u64>()?)))
 }

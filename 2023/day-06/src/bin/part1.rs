@@ -11,7 +11,7 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
+fn process(input: &str) -> Result<u64> {
     let races = day_06::parse_boat_races(input)?;
 
     races.into_iter().map(|r| r.solve_equation()).product()
@@ -35,10 +35,10 @@ mod tests {
     }
 
     #[rstest]
-    #[case(BoatRace::new(7, 9), 4)]
-    #[case(BoatRace::new(15, 40), 8)]
-    #[case(BoatRace::new(30, 200), 9)]
-    fn test_race(#[case] race: BoatRace, #[case] expected: u32) {
+    #[case((7, 9).into(), 4)]
+    #[case((15, 40).into(), 8)]
+    #[case((30, 200).into(), 9)]
+    fn test_race(#[case] race: BoatRace, #[case] expected: u64) {
         let result = race.solve_equation().unwrap();
 
         assert_eq!(expected, result);
