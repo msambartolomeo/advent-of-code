@@ -16,6 +16,7 @@ impl From<(u64, u64)> for BoatRace {
 }
 
 impl BoatRace {
+    #[must_use]
     pub fn new(allowed_time: u64, best_distance: u64) -> Self {
         Self {
             allowed_time,
@@ -23,6 +24,9 @@ impl BoatRace {
         }
     }
 
+    /// # Errors
+    ///
+    /// Returns error if the equation cannot be solved for real numbers
     pub fn solve_equation(&self) -> Result<u64> {
         let time = self.allowed_time as f64;
         let distance = self.best_distance as f64;
@@ -39,7 +43,7 @@ impl BoatRace {
 #[inline]
 fn quadratic_formula(a: f64, b: f64, c: f64) -> Result<(f64, f64)> {
     // NOTE: a must not be 0
-    ensure!(a != 0f64);
+    ensure!(a > f64::EPSILON);
 
     let discriminant = b * b - 4f64 * a * c;
 
@@ -54,6 +58,11 @@ fn quadratic_formula(a: f64, b: f64, c: f64) -> Result<(f64, f64)> {
     ))
 }
 
+/// Parses the boat races
+///
+/// # Errors
+///
+/// Errors if the input is invalid
 pub fn parse_boat_races(input: &str) -> Result<Vec<BoatRace>> {
     let (times, distances) = input
         .split_once('\n')
@@ -79,8 +88,5 @@ fn parse_line<'a>(
 
     ensure!(tag == expected_tag);
 
-    Ok(values
-        .trim()
-        .split_whitespace()
-        .map(|n| Ok(n.parse::<u64>()?)))
+    Ok(values.split_whitespace().map(|n| Ok(n.parse::<u64>()?)))
 }

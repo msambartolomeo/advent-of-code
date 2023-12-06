@@ -1,5 +1,6 @@
 use anyhow::Result;
 use day_06::BoatRace;
+use ilog::IntLog;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -12,7 +13,6 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-#[allow(unused)]
 fn process(input: &str) -> Result<u64> {
     let races = day_06::parse_boat_races(input)?;
 
@@ -26,16 +26,16 @@ fn process(input: &str) -> Result<u64> {
     long_race.solve_equation()
 }
 
+#[allow(trivial_casts)]
 fn append_number(n: &mut u64, m: u64) {
-    let length = (m as f64).log10() as u32 + 1;
+    let length = m.log10() + 1;
 
-    *n *= 10u64.pow(length);
+    *n *= 10u64.pow(length as u32);
 
     *n += m;
 }
 
 #[cfg(test)]
-#[allow(unused)]
 mod tests {
     use super::*;
 

@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.75"
+ilog = "1.0.1"
 
 [dev-dependencies]
 rstest = { version = "0.18.2", default_features = false }
