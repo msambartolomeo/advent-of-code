@@ -1,4 +1,5 @@
 use anyhow::{ensure, Context, Result};
+use itertools::Itertools;
 
 #[derive(Debug)]
 pub struct BoatRace {
@@ -64,12 +65,7 @@ fn quadratic_formula(a: f64, b: f64, c: f64) -> Result<(f64, f64)> {
 ///
 /// Errors if the input is invalid
 pub fn parse_boat_races(input: &str) -> Result<Vec<BoatRace>> {
-    let (times, distances) = input
-        .split_once('\n')
-        .context("Input must have two lines")?;
-
-    let times = parse_line(times, "Time")?;
-    let distances = parse_line(distances, "Distance")?;
+    let (times, distances) = parse_times_and_distances(input)?;
 
     times
         .zip(distances)
@@ -77,10 +73,41 @@ pub fn parse_boat_races(input: &str) -> Result<Vec<BoatRace>> {
         .collect()
 }
 
+/// Parses the single long race
+///
+/// # Errors
+///
+/// Errors if the input is invalid
+pub fn parse_long_boat_race(input: &str) -> Result<BoatRace> {
+    let (times, distances) = parse_times_and_distances(input)?;
+
+    let time = times.process_results(|mut it| it.join(""))?.parse()?;
+    let distance = distances.process_results(|mut it| it.join(""))?.parse()?;
+
+    Ok((time, distance).into())
+}
+
+#[inline]
+fn parse_times_and_distances(
+    input: &str,
+) -> Result<(
+    impl Iterator<Item = Result<u64>> + '_,
+    impl Iterator<Item = Result<u64>> + '_,
+)> {
+    let (times, distances) = input
+        .split_once('\n')
+        .context("Input must have two lines")?;
+
+    let times = parse_line(times, "Time")?;
+    let distances = parse_line(distances, "Distance")?;
+
+    Ok((times, distances))
+}
+
 #[inline]
 fn parse_line<'a>(
     input: &'a str,
-    expected_tag: &'a str,
+    expected_tag: &str,
 ) -> Result<impl Iterator<Item = Result<u64>> + 'a> {
     let (tag, values) = input
         .split_once(':')
