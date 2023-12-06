@@ -2,14 +2,15 @@ use anyhow::{bail, ensure, Context, Error, Ok, Result};
 
 #[derive(Debug)]
 pub struct AlmanacMap {
-    _source: AlmanacMapCategory,
-    _destination: AlmanacMapCategory,
+    pub source: AlmanacMapCategory,
+    pub destination: AlmanacMapCategory,
     converters: Vec<MapRangeConverter>,
 }
 
 impl AlmanacMap {
+    #[must_use]
     pub fn convert(&self, number: u64) -> u64 {
-        for converter in self.converters.iter() {
+        for converter in &self.converters {
             if let Some(n) = converter.convert(number) {
                 return n;
             }
@@ -26,6 +27,7 @@ pub struct MapRangeConverter {
 }
 
 impl MapRangeConverter {
+    #[must_use]
     fn convert(&self, number: u64) -> Option<u64> {
         if number >= self.source_start && number < self.source_start + self.length {
             Some(self.destination_start + number - self.source_start)
@@ -50,7 +52,7 @@ impl TryFrom<Vec<u64>> for MapRangeConverter {
 }
 
 #[derive(Debug)]
-enum AlmanacMapCategory {
+pub enum AlmanacMapCategory {
     Seed,
     Soil,
     Fertilizer,
@@ -79,6 +81,15 @@ impl TryFrom<&str> for AlmanacMapCategory {
     }
 }
 
+/// Parses seeds from input
+///
+/// # Example format
+///
+/// seeds: 79 14 55 13
+///
+/// # Errors
+///
+/// Returns an error if the input does not follow the format
 pub fn parse_seeds(input: &str) -> Result<Vec<u64>> {
     let (seeds, numbers) = input
         .split_once(": ")
@@ -94,6 +105,17 @@ pub fn parse_seeds(input: &str) -> Result<Vec<u64>> {
         .collect()
 }
 
+/// Parses an `AlmanacMap` from input
+///
+/// # Example format
+///
+/// seed-to-soil map:
+/// 50 98 2
+/// 52 50 48
+///
+/// # Errors
+///
+/// Returns an error if the input does not follow the format
 pub fn parse_map(input: &str) -> Result<AlmanacMap> {
     let mut lines = input.lines();
 
@@ -117,8 +139,8 @@ pub fn parse_map(input: &str) -> Result<AlmanacMap> {
         .collect::<Result<Vec<MapRangeConverter>>>()?;
 
     Ok(AlmanacMap {
-        _source: source,
-        _destination: destination,
+        source,
+        destination,
         converters,
     })
 }

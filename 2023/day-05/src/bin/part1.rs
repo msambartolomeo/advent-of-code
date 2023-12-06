@@ -18,13 +18,13 @@ fn process(input: &str) -> Result<u64> {
     let seeds = sections.next().context("First section must be seeds")?;
     let mut seeds = day_05::parse_seeds(seeds)?;
 
-    let almanacs = sections
-        .map(|s| day_05::parse_map(s))
+    let maps = sections
+        .map(day_05::parse_map)
         .collect::<Result<Vec<AlmanacMap>>>()?;
 
-    almanacs.into_iter().for_each(|map| {
+    for map in maps {
         seeds.iter_mut().for_each(|s| *s = map.convert(*s));
-    });
+    }
 
     let result = seeds.into_iter().min().context("Vector must have seeds")?;
 
