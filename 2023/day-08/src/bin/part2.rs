@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -22,7 +22,8 @@ fn process(input: &str) -> Result<u64> {
     let result = starting_nodes
         .into_iter()
         .map(|n| day_08::get_steps_to_end(&directions, &network, n, |s| s.ends_with('Z')))
-        .fold(1, num::integer::lcm);
+        .reduce(num::integer::lcm)
+        .context("There should be at least 1 starting node")?;
 
     Ok(result)
 }
