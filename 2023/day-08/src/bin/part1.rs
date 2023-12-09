@@ -1,7 +1,4 @@
 use anyhow::Result;
-use day_08::Direction;
-use itertools::FoldWhile::{Continue, Done};
-use itertools::Itertools;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -14,28 +11,10 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
-    let (directions, network) = day_08::parse_maps(input)?;
+fn process(input: &str) -> Result<u64> {
+    let (directions, network) = day_08::parser::parse_maps(input)?;
 
-    let result = directions
-        .iter()
-        .cycle()
-        .fold_while((0, "AAA"), |(count, node), direction| {
-            if node == "ZZZ" {
-                return Done((count, node));
-            }
-
-            let current_node = network.get(node).expect("Node should exist");
-
-            let next = match direction {
-                Direction::Left => current_node.0,
-                Direction::Right => current_node.1,
-            };
-
-            Continue((count + 1, next))
-        })
-        .into_inner()
-        .0;
+    let result = day_08::get_steps_to_end(&directions, &network, "AAA", |s| s == "ZZZ");
 
     Ok(result)
 }
