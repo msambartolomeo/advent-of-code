@@ -1,0 +1,8 @@
+set dotenv-load
+
+create day:
+    cargo generate --path rust_template --name {{day}}
+    just input {{day}}
+
+input day:
+    curl --cookie "session=$AOC_SESSION" https://adventofcode.com/2023/day/{{replace_regex(day, "day-0?","")}}/input -o ./{{day}}/input.txt
