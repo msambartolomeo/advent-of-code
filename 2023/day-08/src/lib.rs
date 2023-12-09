@@ -9,9 +9,15 @@ pub enum Direction {
     Right,
 }
 
+type Network<'a> = HashMap<&'a str, (&'a str, &'a str)>;
+
+/// Gets the steps to the end of the map following directions
+///
+/// # Panics
+/// Should not panic if the Network was properly created
 pub fn get_steps_to_end<F>(
-    directions: &Vec<Direction>,
-    network: &HashMap<&str, (&str, &str)>,
+    directions: &[Direction],
+    network: &Network,
     starting_node: &str,
     ending_condition: F,
 ) -> u64
@@ -40,7 +46,7 @@ where
 }
 
 pub mod parser {
-    use super::*;
+    use super::{Direction, Network};
 
     use anyhow::{format_err, Result};
     use winnow::{
@@ -52,7 +58,11 @@ pub mod parser {
         PResult, Parser,
     };
 
-    pub fn parse_maps(input: &str) -> Result<(Vec<Direction>, HashMap<&str, (&str, &str)>)> {
+    /// Parses all the maps into a Direction vector and a network
+    ///
+    /// # Errors
+    /// Errors if the input is not valid
+    pub fn parse_maps(input: &str) -> Result<(Vec<Direction>, Network)> {
         separated_pair(directions, multispace1, network)
             .parse(input)
             .map_err(|e| format_err!(e.to_string()))
@@ -70,7 +80,7 @@ pub mod parser {
         .parse_next(input)
     }
 
-    fn network<'a>(input: &mut &'a str) -> PResult<HashMap<&'a str, (&'a str, &'a str)>> {
+    fn network<'a>(input: &mut &'a str) -> PResult<Network<'a>> {
         repeat(
             1..,
             terminated(

@@ -21,7 +21,7 @@ fn process(input: &str) -> Result<u64> {
 
     let result = starting_nodes
         .into_iter()
-        .map(|n| day_08::get_steps_to_end(&directions, &network, &n, |s| s.ends_with('Z')))
+        .map(|n| day_08::get_steps_to_end(&directions, &network, n, |s| s.ends_with('Z')))
         .fold(1, num::integer::lcm);
 
     Ok(result)
