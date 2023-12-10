@@ -11,21 +11,12 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u64> {
-    let hands = day_07::parse_camel_cards(input)?;
-
-    let result = hands
-        .into_values()
-        .enumerate()
-        .map(|(rank, bid)| (rank as u64 + 1) * bid as u64)
-        .sum();
-
-    Ok(result)
+fn process(input: &str) -> Result<u32> {
+    todo!()
 }
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
@@ -38,6 +29,6 @@ QQQJA 483";
 
         let result = process(input).unwrap();
 
-        assert_eq!(6440, result);
+        assert_eq!(5905, result);
     }
 }

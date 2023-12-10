@@ -1,10 +1,9 @@
-use std::{
-    cmp::Ordering,
-    collections::{BTreeMap, HashMap},
-    str::FromStr,
-};
+use std::cmp::{Ordering, Reverse};
+use std::collections::BTreeMap;
+use std::str::FromStr;
 
 use anyhow::{bail, Context, Result};
+use itertools::Itertools;
 
 #[derive(Debug)]
 pub struct CamelHand {
@@ -24,28 +23,18 @@ impl FromStr for CamelHand {
             .ok()
             .context("String must have exaclty 5 cards")?;
 
-        let mut counts = HashMap::with_capacity(5);
+        let counts = cards.iter().counts();
+        let counts = counts.values().sorted_by_key(|&n| Reverse(n)).collect_vec();
 
-        for card in cards {
-            counts.entry(card).and_modify(|v| *v += 1).or_insert(1);
-        }
-
-        let mut counts = counts.into_iter().collect::<Vec<_>>();
-        counts.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
-
-        let hand_type = match counts[0] {
-            (card, 5) => CamelHandType::FiveOfAKind(card),
-            (card, 4) => CamelHandType::FourOfAKind(card),
-            (card, 3) => match counts[1] {
-                (other, 2) => CamelHandType::FullHouse(card, other),
-                (_, _) => CamelHandType::ThreeOfAKind(card),
-            },
-            (card, 2) => match counts[1] {
-                (other, 2) => CamelHandType::TwoPair(card, other),
-                (_, _) => CamelHandType::OnePair(card),
-            },
-            (card, 1) => CamelHandType::HighCard(card),
-            _ => unreachable!("number can only be 5"),
+        let hand_type = match counts[..] {
+            [5] => CamelHandType::FiveOfAKind,
+            [4, 1] => CamelHandType::FourOfAKind,
+            [3, 2] => CamelHandType::FullHouse,
+            [3, 1, 1] => CamelHandType::ThreeOfAKind,
+            [2, 2, 1] => CamelHandType::TwoPair,
+            [2, 1, 1, 1] => CamelHandType::OnePair,
+            [1, 1, 1, 1, 1] => CamelHandType::HighCard,
+            _ => unreachable!("Unexpected array {counts:?}",),
         };
 
         Ok(CamelHand { cards, hand_type })
@@ -114,41 +103,15 @@ impl TryFrom<char> for CamelCard {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CamelHandType {
-    HighCard(CamelCard),
-    OnePair(CamelCard),
-    TwoPair(CamelCard, CamelCard),
-    ThreeOfAKind(CamelCard),
-    FullHouse(CamelCard, CamelCard),
-    FourOfAKind(CamelCard),
-    FiveOfAKind(CamelCard),
-}
-
-impl CamelHandType {
-    fn as_usize(&self) -> usize {
-        match self {
-            CamelHandType::HighCard(_) => 0,
-            CamelHandType::OnePair(_) => 1,
-            CamelHandType::TwoPair(_, _) => 2,
-            CamelHandType::ThreeOfAKind(_) => 3,
-            CamelHandType::FullHouse(_, _) => 4,
-            CamelHandType::FourOfAKind(_) => 5,
-            CamelHandType::FiveOfAKind(_) => 6,
-        }
-    }
-}
-
-impl PartialOrd for CamelHandType {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for CamelHandType {
-    fn cmp(&self, other: &Self) -> Ordering {
-        (self.as_usize()).cmp(&other.as_usize())
-    }
+    HighCard,
+    OnePair,
+    TwoPair,
+    ThreeOfAKind,
+    FullHouse,
+    FourOfAKind,
+    FiveOfAKind,
 }
 
 pub fn parse_camel_cards(input: &str) -> Result<BTreeMap<CamelHand, u32>> {
