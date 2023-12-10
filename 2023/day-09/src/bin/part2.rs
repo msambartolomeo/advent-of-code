@@ -17,22 +17,11 @@ fn process(input: &str) -> Result<i32> {
 
     let result = data.process_results(|it| {
         it.map(|v| {
-            let mut finals = vec![];
-            let mut next = v;
-            loop {
-                finals.push(*next.first().expect("At Least an element each iteration"));
-                next = next
-                    .iter()
-                    .tuple_windows()
-                    .map(|(a, b)| b - a)
-                    .collect_vec();
-
-                if next.iter().all(|n| *n == 0) {
-                    break;
-                }
-            }
-
-            finals.into_iter().rev().fold(0, |acc, n| n - acc)
+            day_09::differences(v)
+                .map(|v| *v.first().expect("At least an element each iteration"))
+                .collect_vec()
+                .into_iter()
+                .rfold(0, |acc, n| n - acc)
         })
         .sum()
     })?;
