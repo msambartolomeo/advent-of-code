@@ -20,7 +20,7 @@ fn process(input: &str) -> Result<i32> {
             let mut finals = vec![];
             let mut next = v;
             loop {
-                finals.push(*next.last().expect("At Least an element each iteration"));
+                finals.push(*next.first().expect("At Least an element each iteration"));
                 next = next
                     .iter()
                     .tuple_windows()
@@ -31,7 +31,8 @@ fn process(input: &str) -> Result<i32> {
                     break;
                 }
             }
-            finals.into_iter().sum::<i32>()
+
+            finals.into_iter().rev().fold(0, |acc, n| n - acc)
         })
         .sum()
     })?;
@@ -49,6 +50,6 @@ mod tests {
 
         let result = process(input).unwrap();
 
-        assert_eq!(114, result);
+        assert_eq!(2, result);
     }
 }
