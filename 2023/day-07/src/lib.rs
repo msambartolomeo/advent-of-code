@@ -12,10 +12,15 @@ pub struct CamelHand<C: Card, T: HandType<C>> {
 }
 
 pub trait HandType<C: Card>: Ord {
+    /// Returns the Hand type given a hand of cards
     fn from_cards(hand: &[C; 5]) -> Self;
 }
 
 pub trait Card: Ord + Hash + Sized {
+    /// Returns a card from a character
+    ///
+    /// # Errors
+    /// If the char does not represent a card
     fn from_char(c: char) -> Result<Self>;
 }
 
@@ -59,13 +64,23 @@ impl<C: Card, T: HandType<C>> PartialOrd for CamelHand<C, T> {
     }
 }
 
-pub fn parse_camel_cards<C: Card, T: HandType<C>>(
-    input: &str,
-) -> Result<BTreeMap<CamelHand<C, T>, u32>> {
+/// Parses the camel cards
+///
+/// # Errors
+/// If the input is invalid
+pub fn parse_camel_cards<C, T>(input: &str) -> Result<BTreeMap<CamelHand<C, T>, u32>>
+where
+    C: Card,
+    T: HandType<C>,
+{
     input.lines().map(parse_camel_hand).collect()
 }
 
-fn parse_camel_hand<C: Card, T: HandType<C>>(input: &str) -> Result<(CamelHand<C, T>, u32)> {
+fn parse_camel_hand<C, T>(input: &str) -> Result<(CamelHand<C, T>, u32)>
+where
+    C: Card,
+    T: HandType<C>,
+{
     let (hand, bid) = input
         .split_once(' ')
         .context("Hand and Bid must be space separated")?;

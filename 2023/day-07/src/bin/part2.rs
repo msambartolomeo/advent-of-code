@@ -20,7 +20,7 @@ fn process(input: &str) -> Result<u64> {
     let result = hands
         .into_values()
         .enumerate()
-        .map(|(rank, bid)| (rank as u64 + 1) * bid as u64)
+        .map(|(rank, bid)| (rank as u64 + 1) * u64::from(bid))
         .sum();
 
     Ok(result)
@@ -80,23 +80,21 @@ impl HandType<CamelCardJoker> for CamelHandTypeJoker {
         let mut counts = hand.iter().counts();
 
         let joker_count = counts.remove(&CamelCardJoker::J);
-        let mut counts = counts.values().sorted().copied().collect_vec();
+        let mut counts = counts.values().sorted().rev().copied().collect_vec();
 
-        if let Some(n) = joker_count {
-            if n == 5 {
-                counts.push(n);
-            } else {
-                counts.last_mut().map(|m| *m += n);
-            }
+        match joker_count {
+            Some(5) => counts.push(5),
+            Some(n) => counts[0] += n,
+            _ => (),
         }
 
         match counts[..] {
             [5] => CamelHandTypeJoker::FiveOfAKind,
-            [1, 4] => CamelHandTypeJoker::FourOfAKind,
-            [2, 3] => CamelHandTypeJoker::FullHouse,
-            [1, 1, 3] => CamelHandTypeJoker::ThreeOfAKind,
-            [1, 2, 2] => CamelHandTypeJoker::TwoPair,
-            [1, 1, 1, 2] => CamelHandTypeJoker::OnePair,
+            [4, 1] => CamelHandTypeJoker::FourOfAKind,
+            [3, 2] => CamelHandTypeJoker::FullHouse,
+            [3, 1, 1] => CamelHandTypeJoker::ThreeOfAKind,
+            [2, 2, 1] => CamelHandTypeJoker::TwoPair,
+            [2, 1, 1, 1] => CamelHandTypeJoker::OnePair,
             [1, 1, 1, 1, 1] => CamelHandTypeJoker::HighCard,
             _ => unreachable!("Unexpected array {counts:?}"),
         }

@@ -20,7 +20,7 @@ fn process(input: &str) -> Result<u64> {
     let result = hands
         .into_values()
         .enumerate()
-        .map(|(rank, bid)| (rank as u64 + 1) * bid as u64)
+        .map(|(rank, bid)| (rank as u64 + 1) * u64::from(bid))
         .sum();
 
     Ok(result)
