@@ -88,7 +88,7 @@ impl HandType<CamelCard> for CamelHandType {
             [1, 2, 2] => CamelHandType::TwoPair,
             [1, 1, 1, 2] => CamelHandType::OnePair,
             [1, 1, 1, 1, 1] => CamelHandType::HighCard,
-            _ => unreachable!("Unexpected array {counts:?}",),
+            _ => unreachable!("Unexpected array {counts:?}"),
         }
     }
 }
