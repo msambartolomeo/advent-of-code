@@ -1,7 +1,4 @@
-use std::collections::BTreeMap;
-
 use anyhow::Result;
-use day_11::Galaxy;
 use itertools::Itertools;
 
 fn main() -> Result<()> {
@@ -18,9 +15,7 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<usize> {
     let mut galaxies = day_11::parse_cosmos(input).collect_vec();
 
-    expand_galaxy(&mut galaxies, Galaxy::x_mut);
-
-    expand_galaxy(&mut galaxies, Galaxy::y_mut);
+    day_11::expand_galaxy(&mut galaxies, 2);
 
     let result = galaxies
         .iter()
@@ -29,30 +24,6 @@ fn process(input: &str) -> Result<usize> {
         .sum();
 
     Ok(result)
-}
-
-fn expand_galaxy<F>(galaxies: &mut [Galaxy], direction: F)
-where
-    F: Fn(&mut Galaxy) -> &mut usize,
-{
-    let mut galaxies_by_line = galaxies.iter_mut().fold(BTreeMap::new(), |mut map, g| {
-        map.entry(*direction(g)).or_insert(Vec::new()).push(g);
-        map
-    });
-
-    let limit = galaxies_by_line
-        .keys()
-        .max()
-        .expect("One galaxy must exist");
-
-    let mut expanded = 0;
-
-    for i in 0..=*limit {
-        match galaxies_by_line.get_mut(&i) {
-            Some(gs) => gs.iter_mut().for_each(|g| *direction(g) += expanded),
-            None => expanded += 1,
-        }
-    }
 }
 
 #[cfg(test)]
