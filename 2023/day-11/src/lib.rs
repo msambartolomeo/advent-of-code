@@ -1,20 +1,14 @@
 use std::collections::BTreeMap;
 
+use itertools::Itertools;
+
 #[derive(Debug)]
 pub struct Galaxy {
-    x: usize,
-    y: usize,
+    pub x: usize,
+    pub y: usize,
 }
 
 impl Galaxy {
-    pub fn x(&self) -> usize {
-        self.x
-    }
-
-    pub fn y(&self) -> usize {
-        self.y
-    }
-
     pub fn x_mut(&mut self) -> &mut usize {
         &mut self.x
     }
@@ -42,10 +36,11 @@ fn expand_galaxy_internal<F>(galaxies: &mut [Galaxy], direction: F, expansion_si
 where
     F: Fn(&mut Galaxy) -> &mut usize,
 {
-    let mut galaxies_by_line = galaxies.iter_mut().fold(BTreeMap::new(), |mut map, g| {
-        map.entry(*direction(g)).or_insert(Vec::new()).push(g);
-        map
-    });
+    let mut galaxies_by_line: BTreeMap<usize, Vec<&mut Galaxy>> =
+        galaxies.iter_mut().fold(BTreeMap::new(), |mut map, g| {
+            map.entry(*direction(g)).or_default().push(g);
+            map
+        });
 
     let limit = galaxies_by_line
         .keys()
@@ -60,4 +55,13 @@ where
             None => expanded += expansion_size - 1,
         }
     }
+}
+
+#[must_use]
+pub fn shortest_paths(galaxies: &[Galaxy]) -> usize {
+    galaxies
+        .iter()
+        .tuple_combinations()
+        .map(|(g1, g2)| g1.x.abs_diff(g2.x) + g1.y.abs_diff(g2.y))
+        .sum()
 }

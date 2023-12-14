@@ -1,29 +1,20 @@
-use anyhow::Result;
-use itertools::Itertools;
+use day_11::Galaxy;
 
-fn main() -> Result<()> {
+fn main() {
     let input = include_str!("../../input.txt");
 
-    let result = process(input)?;
+    let result = process(input);
 
     println!("{result}");
-
-    Ok(())
 }
 
 #[inline]
-fn process(input: &str) -> Result<usize> {
-    let mut galaxies = day_11::parse_cosmos(input).collect_vec();
+fn process(input: &str) -> usize {
+    let mut galaxies = day_11::parse_cosmos(input).collect::<Vec<Galaxy>>();
 
     day_11::expand_galaxy(&mut galaxies, 2);
 
-    let result = galaxies
-        .iter()
-        .tuple_combinations()
-        .map(|(g1, g2)| g1.x().abs_diff(g2.x()) + g1.y().abs_diff(g2.y()))
-        .sum();
-
-    Ok(result)
+    day_11::shortest_paths(&galaxies)
 }
 
 #[cfg(test)]
@@ -43,7 +34,7 @@ mod tests {
 .......#..
 #...#.....";
 
-        let result = process(input).unwrap();
+        let result = process(input);
 
         assert_eq!(374, result);
     }
