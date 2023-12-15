@@ -23,7 +23,7 @@ fn process(input: &str) -> Result<usize> {
 
     let result = mirrors
         .into_iter()
-        .filter_map(|m| find_mirror(m.rows()).or(find_mirror(m.columns())))
+        .filter_map(|m| find_mirror(&m.rows()).or(find_mirror(&m.columns())))
         .fold(0, |sum, idx| match idx {
             Direction::Vertical(idx) => sum + idx,
             Direction::Horizontal(idx) => sum + 100 * idx,
@@ -32,7 +32,7 @@ fn process(input: &str) -> Result<usize> {
     Ok(result)
 }
 
-fn find_mirror(mirror: MirrorAccessor) -> Option<Direction> {
+fn find_mirror(mirror: &MirrorAccessor) -> Option<Direction> {
     mirror
         .lines()
         .enumerate()
@@ -42,31 +42,20 @@ fn find_mirror(mirror: MirrorAccessor) -> Option<Direction> {
             (difference <= 1).then_some((idx1 + 1, difference))
         })
         .find_map(|(idx, mut difference)| {
-            if (0..idx - 1)
+            difference += (0..idx - 1)
                 .rev()
                 .zip(idx + 1..mirror.len())
-                .all(
-                    |(id1, id2)| match differences(&mirror.nth_line(id1), &mirror.nth_line(id2)) {
-                        0 => true,
-                        1 if difference == 0 => {
-                            difference = 1;
-                            true
-                        }
-                        _ => false,
-                    },
-                )
-            {
-                if difference == 1 {
-                    return Some(match mirror {
-                        MirrorAccessor::Rows(_) => Direction::Horizontal(idx),
-                        MirrorAccessor::Columns(_) => Direction::Vertical(idx),
-                    });
-                }
-            }
-            None
+                .map(|(id1, id2)| differences(&mirror.nth_line(id1), &mirror.nth_line(id2)))
+                .sum::<usize>();
+
+            (difference == 1).then_some(match mirror {
+                MirrorAccessor::Rows(_) => Direction::Horizontal(idx),
+                MirrorAccessor::Columns(_) => Direction::Vertical(idx),
+            })
         })
 }
 
+#[inline]
 fn differences<T: Eq>(v1: &[T], v2: &[T]) -> usize {
     v1.iter().zip(v2).filter(|(e1, e2)| e1 != e2).count()
 }

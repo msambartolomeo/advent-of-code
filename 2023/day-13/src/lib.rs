@@ -27,6 +27,9 @@ pub struct Mirror {
 }
 
 impl Mirror {
+    /// # Panics
+    /// if all rows dont have the same length
+    #[must_use]
     pub fn new(matrix: Vec<Vec<Element>>) -> Self {
         let rows = matrix.len();
         let columns = matrix[0].len();
@@ -40,18 +43,22 @@ impl Mirror {
         }
     }
 
+    #[must_use]
     pub fn nth_row(&self, idx: usize) -> Vec<Element> {
-        self.matrix[idx].iter().copied().collect()
+        self.matrix[idx].clone()
     }
 
+    #[must_use]
     pub fn nth_column(&self, idx: usize) -> Vec<Element> {
         self.matrix.iter().map(move |v| v[idx]).collect()
     }
 
+    #[must_use]
     pub fn rows(&self) -> MirrorAccessor {
         MirrorAccessor::Rows(self)
     }
 
+    #[must_use]
     pub fn columns(&self) -> MirrorAccessor {
         MirrorAccessor::Columns(self)
     }
@@ -63,6 +70,7 @@ pub enum MirrorAccessor<'a> {
 }
 
 impl<'a> MirrorAccessor<'a> {
+    #[must_use]
     pub fn len(&self) -> usize {
         match self {
             MirrorAccessor::Rows(m) => m.rows,
@@ -70,6 +78,12 @@ impl<'a> MirrorAccessor<'a> {
         }
     }
 
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    #[must_use]
     pub fn nth_line(&self, idx: usize) -> Vec<Element> {
         match self {
             MirrorAccessor::Rows(m) => m.nth_row(idx),
@@ -77,16 +91,18 @@ impl<'a> MirrorAccessor<'a> {
         }
     }
 
+    #[must_use]
     pub fn lines(&self) -> Box<dyn Iterator<Item = Vec<Element>> + '_> {
         match self {
-            MirrorAccessor::Rows(m) => Box::new((0..m.rows).into_iter().map(|i| m.nth_row(i))),
-            MirrorAccessor::Columns(m) => {
-                Box::new((0..m.columns).into_iter().map(|i| m.nth_column(i)))
-            }
+            MirrorAccessor::Rows(m) => Box::new((0..m.rows).map(|i| m.nth_row(i))),
+            MirrorAccessor::Columns(m) => Box::new((0..m.columns).map(|i| m.nth_column(i))),
         }
     }
 }
-
+/// Parses the environment into a vector of mirror patterns
+///
+/// # Errors
+/// if input is invalid
 pub fn parse_environment(input: &str) -> Result<Vec<Mirror>> {
     input.split("\n\n").map(parse_mirror).collect()
 }
