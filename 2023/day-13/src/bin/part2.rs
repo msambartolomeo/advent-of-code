@@ -38,14 +38,14 @@ fn find_mirror(mirror: &MirrorAccessor) -> Option<Direction> {
         .enumerate()
         .tuple_windows()
         .filter_map(|((idx1, v1), (_, v2))| {
-            let difference = differences(&v1, &v2);
+            let difference = differences(v1, v2);
             (difference <= 1).then_some((idx1 + 1, difference))
         })
         .find_map(|(idx, mut difference)| {
             difference += (0..idx - 1)
                 .rev()
                 .zip(idx + 1..mirror.len())
-                .map(|(id1, id2)| differences(&mirror.nth_line(id1), &mirror.nth_line(id2)))
+                .map(|(id1, id2)| differences(mirror.nth_line(id1), mirror.nth_line(id2)))
                 .sum::<usize>();
 
             (difference == 1).then_some(match mirror {
@@ -56,8 +56,11 @@ fn find_mirror(mirror: &MirrorAccessor) -> Option<Direction> {
 }
 
 #[inline]
-fn differences<T: Eq>(v1: &[T], v2: &[T]) -> usize {
-    v1.iter().zip(v2).filter(|(e1, e2)| e1 != e2).count()
+fn differences<E: Eq, I>(v1: I, v2: I) -> usize
+where
+    I: IntoIterator<Item = E>,
+{
+    v1.into_iter().zip(v2).filter(|(e1, e2)| e1 != e2).count()
 }
 
 #[cfg(test)]

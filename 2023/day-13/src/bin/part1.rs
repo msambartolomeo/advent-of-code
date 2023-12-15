@@ -42,7 +42,12 @@ fn find_mirror(mirror: &MirrorAccessor) -> Option<Direction> {
             (0..idx - 1)
                 .rev()
                 .zip(idx + 1..mirror.len())
-                .all(|(id1, id2)| mirror.nth_line(id1) == mirror.nth_line(id2))
+                .all(|(id1, id2)| {
+                    mirror
+                        .nth_line(id1)
+                        .zip(mirror.nth_line(id2))
+                        .all(|(e1, e2)| e1 == e2)
+                })
                 .then_some(match mirror {
                     MirrorAccessor::Rows(_) => Direction::Horizontal(idx),
                     MirrorAccessor::Columns(_) => Direction::Vertical(idx),
