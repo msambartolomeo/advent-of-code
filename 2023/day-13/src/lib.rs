@@ -40,20 +40,50 @@ impl Mirror {
         }
     }
 
-    pub fn nth_row(&self, idx: usize) -> &Vec<Element> {
-        &self.matrix[idx]
+    pub fn nth_row(&self, idx: usize) -> Vec<Element> {
+        self.matrix[idx].iter().copied().collect()
     }
 
-    pub fn nth_column<'a>(&'a self, idx: usize) -> Vec<Element> {
+    pub fn nth_column(&self, idx: usize) -> Vec<Element> {
         self.matrix.iter().map(move |v| v[idx]).collect()
     }
 
-    pub fn rows(&self) -> impl Iterator<Item = &Vec<Element>> + '_ {
-        (0..self.rows).into_iter().map(|i| self.nth_row(i))
+    pub fn rows(&self) -> MirrorAccessor {
+        MirrorAccessor::Rows(self)
     }
 
-    pub fn columns(&self) -> impl Iterator<Item = Vec<Element>> + '_ {
-        (0..self.columns).into_iter().map(|i| self.nth_column(i))
+    pub fn columns(&self) -> MirrorAccessor {
+        MirrorAccessor::Columns(self)
+    }
+}
+
+pub enum MirrorAccessor<'a> {
+    Rows(&'a Mirror),
+    Columns(&'a Mirror),
+}
+
+impl<'a> MirrorAccessor<'a> {
+    pub fn len(&self) -> usize {
+        match self {
+            MirrorAccessor::Rows(m) => m.rows,
+            MirrorAccessor::Columns(m) => m.columns,
+        }
+    }
+
+    pub fn nth_line(&self, idx: usize) -> Vec<Element> {
+        match self {
+            MirrorAccessor::Rows(m) => m.nth_row(idx),
+            MirrorAccessor::Columns(m) => m.nth_column(idx),
+        }
+    }
+
+    pub fn lines(&self) -> Box<dyn Iterator<Item = Vec<Element>> + '_> {
+        match self {
+            MirrorAccessor::Rows(m) => Box::new((0..m.rows).into_iter().map(|i| m.nth_row(i))),
+            MirrorAccessor::Columns(m) => {
+                Box::new((0..m.columns).into_iter().map(|i| m.nth_column(i)))
+            }
+        }
     }
 }
 
