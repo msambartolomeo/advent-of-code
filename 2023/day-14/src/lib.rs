@@ -1,8 +1,6 @@
-use std::{
-    collections::HashMap,
-    fmt::{Display, Write},
-    ops::{Deref, DerefMut},
-};
+use std::collections::HashMap;
+use std::fmt::{Display, Write};
+use std::ops::{Deref, DerefMut};
 
 use anyhow::{bail, Context, Result};
 
@@ -80,6 +78,109 @@ impl Display for Platform {
             f.write_char('\n')?
         }
         Ok(())
+    }
+}
+
+pub fn slide_platform_cycle(platform: &mut Platform) {
+    slide_platform_north(platform);
+    slide_platform_west(platform);
+    slide_platform_south(platform);
+    slide_platform_east(platform);
+}
+
+pub fn slide_platform_north(platform: &mut Platform) {
+    for x in 0..platform.length {
+        let mut rock_to_move = None;
+        for y in (0..platform.height).rev() {
+            match platform.get(&(x, y).into()) {
+                Some(Rock::Rounded) => {
+                    if rock_to_move.is_none() {
+                        rock_to_move = Some(y);
+                    }
+                }
+                Some(Rock::Cube) => rock_to_move = None,
+                None => {
+                    if let Some(old_rock) = rock_to_move.take() {
+                        platform.remove(&(x, old_rock).into());
+                        platform.insert((x, y).into(), Rock::Rounded);
+
+                        rock_to_move = Some(old_rock - 1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn slide_platform_west(platform: &mut Platform) {
+    for y in 0..platform.height {
+        let mut rock_to_move = None;
+        for x in (0..platform.length).rev() {
+            match platform.get(&(x, y).into()) {
+                Some(Rock::Rounded) => {
+                    if rock_to_move.is_none() {
+                        rock_to_move = Some(x);
+                    }
+                }
+                Some(Rock::Cube) => rock_to_move = None,
+                None => {
+                    if let Some(old_rock) = rock_to_move.take() {
+                        platform.remove(&(old_rock, y).into());
+                        platform.insert((x, y).into(), Rock::Rounded);
+
+                        rock_to_move = Some(old_rock - 1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn slide_platform_south(platform: &mut Platform) {
+    for x in 0..platform.length {
+        let mut rock_to_move = None;
+        for y in 0..platform.height {
+            match platform.get(&(x, y).into()) {
+                Some(Rock::Rounded) => {
+                    if rock_to_move.is_none() {
+                        rock_to_move = Some(y);
+                    }
+                }
+                Some(Rock::Cube) => rock_to_move = None,
+                None => {
+                    if let Some(old_rock) = rock_to_move.take() {
+                        platform.remove(&(x, old_rock).into());
+                        platform.insert((x, y).into(), Rock::Rounded);
+
+                        rock_to_move = Some(old_rock + 1);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn slide_platform_east(platform: &mut Platform) {
+    for y in 0..platform.height {
+        let mut rock_to_move = None;
+        for x in 0..platform.length {
+            match platform.get(&(x, y).into()) {
+                Some(Rock::Rounded) => {
+                    if rock_to_move.is_none() {
+                        rock_to_move = Some(x);
+                    }
+                }
+                Some(Rock::Cube) => rock_to_move = None,
+                None => {
+                    if let Some(old_rock) = rock_to_move.take() {
+                        platform.remove(&(old_rock, y).into());
+                        platform.insert((x, y).into(), Rock::Rounded);
+
+                        rock_to_move = Some(old_rock + 1);
+                    }
+                }
+            }
+        }
     }
 }
 

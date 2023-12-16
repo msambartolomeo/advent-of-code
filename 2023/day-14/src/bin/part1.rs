@@ -1,5 +1,5 @@
 use anyhow::Result;
-use day_14::{Platform, Rock};
+use day_14::Rock;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -15,7 +15,7 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u64> {
     let mut platform = day_14::parse_platform(input)?;
 
-    slide_platform_north(&mut platform);
+    day_14::slide_platform_north(&mut platform);
 
     let result = platform
         .iter()
@@ -26,30 +26,6 @@ fn process(input: &str) -> Result<u64> {
         .sum();
 
     Ok(result)
-}
-
-fn slide_platform_north(platform: &mut Platform) {
-    for x in 0..platform.length {
-        let mut rock_to_move = None;
-        for y in (0..platform.height).rev() {
-            match platform.get(&(x, y).into()) {
-                Some(Rock::Rounded) => {
-                    if rock_to_move.is_none() {
-                        rock_to_move = Some(y);
-                    }
-                }
-                Some(Rock::Cube) => rock_to_move = None,
-                None => {
-                    if let Some(old_rock) = rock_to_move.take() {
-                        platform.remove(&(x, old_rock).into());
-                        platform.insert((x, y).into(), Rock::Rounded);
-
-                        rock_to_move = Some(old_rock - 1);
-                    }
-                }
-            }
-        }
-    }
 }
 
 #[cfg(test)]
