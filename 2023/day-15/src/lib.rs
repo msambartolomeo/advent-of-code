@@ -20,10 +20,30 @@ pub enum InitializationOperation {
     Remove(Label),
 }
 
+#[must_use]
+#[inline]
+pub fn holiday_ascii_string_helper(string: &str) -> HASH {
+    string.as_bytes().iter().fold(0, |current_value, &c| {
+        current_value.wrapping_add(c).wrapping_mul(17)
+    })
+}
+
+#[inline]
+#[must_use]
+pub fn holiday_ascii_string_helper_manual_arrangement_procedure() -> HASHMAP {
+    HashMap::new()
+}
+
+#[inline]
+pub fn parse_manual(input: &str) -> impl Iterator<Item = &str> {
+    input.lines().flat_map(|l| l.split(','))
+}
+
 /// Parses the instruction returning the operation
 ///
 /// # Errors
 /// If the instruction is not a label followed by '-' or '=' and then a number
+#[inline]
 pub fn parse_instruction(input: &str) -> Result<InitializationOperation> {
     alt((add_instruction, remove_instruction))
         .parse(input)
@@ -44,24 +64,6 @@ fn remove_instruction(input: &mut &str) -> PResult<InitializationOperation> {
     terminated(alpha1.parse_to(), '-')
         .map(InitializationOperation::Remove)
         .parse_next(input)
-}
-
-#[must_use]
-pub fn holiday_ascii_string_helper_manual_arrangement_procedure() -> HASHMAP {
-    HashMap::new()
-}
-
-#[must_use]
-#[inline]
-pub fn holiday_ascii_string_helper(string: &str) -> HASH {
-    string.as_bytes().iter().fold(0, |current_value, &c| {
-        current_value.wrapping_add(c).wrapping_mul(17)
-    })
-}
-
-#[inline]
-pub fn parse_manual(input: &str) -> impl Iterator<Item = &str> {
-    input.lines().flat_map(|l| l.split(','))
 }
 
 #[cfg(test)]
