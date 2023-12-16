@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::{Display, Write},
     ops::{Deref, DerefMut},
 };
 
@@ -19,6 +20,15 @@ impl TryFrom<char> for Rock {
             'O' => Ok(Rock::Rounded),
             '#' => Ok(Rock::Cube),
             _ => bail!("Invalid rock"),
+        }
+    }
+}
+
+impl Display for Rock {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Rock::Rounded => f.write_char('O'),
+            Rock::Cube => f.write_char('#'),
         }
     }
 }
@@ -55,6 +65,21 @@ impl Deref for Platform {
 impl DerefMut for Platform {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.matrix
+    }
+}
+
+impl Display for Platform {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for y in 0..self.height {
+            for x in 0..self.length {
+                match self.get(&(x, y).into()) {
+                    Some(rock) => f.write_str(&rock.to_string())?,
+                    None => f.write_char('.')?,
+                }
+            }
+            f.write_char('\n')?
+        }
+        Ok(())
     }
 }
 
