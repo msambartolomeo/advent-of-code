@@ -9,7 +9,8 @@ fn main() {
 #[inline]
 fn process(input: &str) -> u64 {
     day_15::parse_manual(input)
-        .map(|s| u64::from(day_15::holiday_ascii_string_helper(s)))
+        .map(day_15::holiday_ascii_string_helper)
+        .map(u64::from)
         .sum()
 }
 
