@@ -1,5 +1,5 @@
 use anyhow::Result;
-use day_14::Rock;
+use day_14::{Platform, Rock};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -12,54 +12,43 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<usize> {
+fn process(input: &str) -> Result<u64> {
     let mut platform = day_14::parse_platform(input)?;
 
     slide_platform_north(&mut platform);
 
     let result = platform
-        .into_iter()
-        .map(|column| {
-            column
-                .into_iter()
-                .rev()
-                .enumerate()
-                .map(|(i, r)| match r {
-                    Rock::Rounded => i + 1,
-                    Rock::Cube | Rock::Empty => 0,
-                })
-                .sum::<usize>()
+        .iter()
+        .map(|(c, r)| match r {
+            Rock::Rounded => platform.height as u64 - c.y,
+            Rock::Cube => 0,
         })
-        .sum::<usize>();
+        .sum();
 
     Ok(result)
 }
 
-fn slide_platform_north(platform: &mut Vec<Vec<Rock>>) {
-    for column in platform.iter_mut() {
-        let mut swaps = Vec::new();
+fn slide_platform_north(platform: &mut Platform) {
+    for x in 0..platform.length {
         let mut rock_to_move = None;
-        for (current, rock) in column.iter().enumerate().rev() {
-            match rock {
-                Rock::Rounded => {
+        for y in (0..platform.height).rev() {
+            match platform.get(&(x, y).into()) {
+                Some(Rock::Rounded) => {
                     if rock_to_move.is_none() {
-                        rock_to_move = Some(current);
+                        rock_to_move = Some(y);
                     }
                 }
-                Rock::Cube => rock_to_move = None,
-                Rock::Empty => {
-                    if let Some(other) = rock_to_move.take() {
-                        swaps.push((other, current));
-                        rock_to_move = Some(other - 1);
+                Some(Rock::Cube) => rock_to_move = None,
+                None => {
+                    if let Some(old_rock) = rock_to_move.take() {
+                        platform.remove(&(x, old_rock).into());
+                        platform.insert((x, y).into(), Rock::Rounded);
+
+                        rock_to_move = Some(old_rock - 1);
                     }
                 }
             }
         }
-
-        swaps.into_iter().for_each(|(i1, i2)| {
-            let rock = std::mem::take(&mut column[i1]);
-            column[i2] = rock;
-        })
     }
 }
 
