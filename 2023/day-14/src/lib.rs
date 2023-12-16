@@ -75,7 +75,7 @@ impl Display for Platform {
                     None => f.write_char('.')?,
                 }
             }
-            f.write_char('\n')?
+            f.write_char('\n')?;
         }
         Ok(())
     }
@@ -184,6 +184,10 @@ pub fn slide_platform_east(platform: &mut Platform) {
     }
 }
 
+/// Parses a platform
+///
+/// # Errors
+/// If the input is not valid
 pub fn parse_platform(input: &str) -> Result<Platform> {
     let height = input.lines().count();
     let length = input.lines().next().context("Input not empty")?.len();
