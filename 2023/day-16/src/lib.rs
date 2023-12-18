@@ -1,16 +1,15 @@
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut, Not};
-use std::rc::Rc;
 
 use anyhow::{bail, Context, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Splitter {
     splitter_type: SplitterType,
     energized: bool,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum SplitterOutput {
     Split([Direction; 2]),
     Continue,
@@ -44,13 +43,13 @@ impl Splitter {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum SplitterType {
     Vertical,
     Horizontal,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Mirror {
     mirror_type: MirrorType,
     left_energized: bool,
@@ -111,7 +110,7 @@ impl Mirror {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum LightDeflector {
     Mirror(Mirror),
     Splitter(Splitter),
@@ -145,7 +144,7 @@ pub enum Direction {
 
 type Coordinates = (usize, usize);
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Contraption {
     pub matrix: HashMap<Coordinates, LightDeflector>,
     pub length: usize,
@@ -179,58 +178,56 @@ impl Contraption {
             Direction::Right => (x != self.length - 1).then(|| (x + 1, y)),
         }
     }
-}
 
-pub fn energize(
-    contraption: &mut Rc<Contraption>,
-    direction: Direction,
-    position: Option<(usize, usize)>,
-) -> Box<dyn Iterator<Item = (usize, usize)>> {
-    match position {
-        Some(position) => match Rc::get_mut(contraption).unwrap().get_mut(&position) {
-            Some(deflector) => match deflector {
-                LightDeflector::Mirror(mirror) => match mirror.redirect(direction) {
-                    Some(new_direction) => energize_next(contraption, new_direction, position),
-                    None => Box::new(std::iter::empty()),
+    pub fn energize(
+        &mut self,
+        direction: Direction,
+        position: Option<(usize, usize)>,
+    ) -> Box<dyn Iterator<Item = (usize, usize)>> {
+        match position {
+            Some(position) => match self.get_mut(&position) {
+                Some(deflector) => match deflector {
+                    LightDeflector::Mirror(mirror) => match mirror.redirect(direction) {
+                        Some(new_direction) => self.energize_next(new_direction, position),
+                        None => Box::new(std::iter::empty()),
+                    },
+                    LightDeflector::Splitter(splitter) => match splitter.split(direction) {
+                        Some(SplitterOutput::Split([d1, d2])) => {
+                            let p1 = self.next_position(position, d1);
+                            let p2 = self.next_position(position, d2);
+
+                            let it = self.energize(d1, p1).chain(self.energize(d2, p2));
+
+                            Box::new(std::iter::once(position).chain(it))
+                        }
+                        Some(SplitterOutput::Continue) => self.energize_next(direction, position),
+                        None => Box::new(std::iter::empty()),
+                    },
                 },
-                LightDeflector::Splitter(splitter) => match splitter.split(direction) {
-                    Some(SplitterOutput::Split([d1, d2])) => {
-                        let p1 = contraption.next_position(position, d1);
-                        let p2 = contraption.next_position(position, d2);
-
-                        let it = energize(contraption, d1, p1).chain(energize(contraption, d2, p2));
-
-                        Box::new(std::iter::once(position).chain(it))
-                    }
-                    Some(SplitterOutput::Continue) => {
-                        energize_next(contraption, direction, position)
-                    }
-                    None => Box::new(std::iter::empty()),
-                },
+                None => self.energize_next(direction, position),
             },
-            None => energize_next(contraption, direction, position),
-        },
-        None => Box::new(std::iter::empty()),
+            None => Box::new(std::iter::empty()),
+        }
     }
-}
 
-#[inline]
-fn energize_next(
-    contraption: &mut Rc<Contraption>,
-    direction: Direction,
-    position: (usize, usize),
-) -> Box<dyn Iterator<Item = (usize, usize)>> {
-    let new_position = contraption.next_position(position, direction);
-    let it = energize(contraption, direction, new_position);
+    #[inline]
+    fn energize_next(
+        &mut self,
+        direction: Direction,
+        position: (usize, usize),
+    ) -> Box<dyn Iterator<Item = (usize, usize)>> {
+        let new_position = self.next_position(position, direction);
+        let it = self.energize(direction, new_position);
 
-    Box::new(std::iter::once(position).chain(it))
+        Box::new(std::iter::once(position).chain(it))
+    }
 }
 
 /// Parses a contraption
 ///
 /// # Errors
 /// If the input is not valid
-pub fn parse_contraption(input: &str) -> Result<Rc<Contraption>> {
+pub fn parse_contraption(input: &str) -> Result<Contraption> {
     let height = input.lines().count();
     let length = input.lines().next().context("Input not empty")?.len();
 
@@ -244,9 +241,9 @@ pub fn parse_contraption(input: &str) -> Result<Rc<Contraption>> {
         })
         .collect::<Result<_>>()?;
 
-    Ok(Rc::new(Contraption {
+    Ok(Contraption {
         matrix,
         length,
         height,
-    }))
+    })
 }

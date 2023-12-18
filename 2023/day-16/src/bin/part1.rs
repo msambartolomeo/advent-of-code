@@ -17,7 +17,8 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u64> {
     let mut contraption = day_16::parse_contraption(input)?;
 
-    let result = day_16::energize(&mut contraption, Direction::Right, Some((0, 0)))
+    let result = contraption
+        .energize(Direction::Right, Some((0, 0)))
         .collect::<HashSet<_>>()
         .len() as u64;
 
