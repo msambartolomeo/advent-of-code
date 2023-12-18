@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::ops::{Deref, DerefMut, Not};
+use std::rc::Rc;
 
 use anyhow::{bail, Context, Result};
 
@@ -23,7 +24,7 @@ impl Splitter {
         }
     }
 
-    pub fn get_output(&mut self, direction: Direction) -> Option<SplitterOutput> {
+    pub fn split(&mut self, direction: Direction) -> Option<SplitterOutput> {
         match self.splitter_type {
             SplitterType::Vertical => match direction {
                 Direction::Left | Direction::Right => self.energized.not().then(|| {
@@ -56,6 +57,12 @@ pub struct Mirror {
     right_energized: bool,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum MirrorType {
+    Left,
+    Right,
+}
+
 impl Mirror {
     fn new(mirror_type: MirrorType) -> Self {
         Self {
@@ -65,52 +72,43 @@ impl Mirror {
         }
     }
 
-    pub fn get_output(&mut self, direction: Direction) -> Option<Direction> {
+    pub const fn get_redirected_direction(&self, direction: Direction) -> Direction {
         match self.mirror_type {
             MirrorType::Left => match direction {
-                Direction::Right => self.left_energized.not().then(|| {
-                    self.left_energized = true;
-                    Direction::Up
-                }),
-                Direction::Down => self.left_energized.not().then(|| {
-                    self.left_energized = true;
-                    Direction::Left
-                }),
-                Direction::Left => self.right_energized.not().then(|| {
-                    self.right_energized = true;
-                    Direction::Down
-                }),
-                Direction::Up => self.right_energized.not().then(|| {
-                    self.right_energized = true;
-                    Direction::Right
-                }),
+                Direction::Up => Direction::Right,
+                Direction::Down => Direction::Left,
+                Direction::Left => Direction::Down,
+                Direction::Right => Direction::Up,
             },
             MirrorType::Right => match direction {
-                Direction::Down => self.left_energized.not().then(|| {
-                    self.left_energized = true;
-                    Direction::Right
-                }),
-                Direction::Left => self.left_energized.not().then(|| {
-                    self.left_energized = true;
-                    Direction::Up
-                }),
-                Direction::Right => self.right_energized.not().then(|| {
-                    self.right_energized = true;
-                    Direction::Down
-                }),
-                Direction::Up => self.right_energized.not().then(|| {
-                    self.right_energized = true;
-                    Direction::Left
-                }),
+                Direction::Up => Direction::Left,
+                Direction::Down => Direction::Right,
+                Direction::Left => Direction::Up,
+                Direction::Right => Direction::Down,
             },
         }
     }
-}
 
-#[derive(Debug)]
-pub enum MirrorType {
-    Left,
-    Right,
+    pub fn redirect(&mut self, direction: Direction) -> Option<Direction> {
+        let new_direction = self.get_redirected_direction(direction);
+
+        match (self.mirror_type, direction) {
+            (MirrorType::Left, Direction::Right | Direction::Down)
+            | (MirrorType::Right, Direction::Right | Direction::Up) => {
+                self.left_energized.not().then(|| {
+                    self.left_energized = true;
+                    new_direction
+                })
+            }
+            (MirrorType::Left, Direction::Left | Direction::Up)
+            | (MirrorType::Right, Direction::Left | Direction::Down) => {
+                self.right_energized.not().then(|| {
+                    self.right_energized = true;
+                    new_direction
+                })
+            }
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -183,11 +181,56 @@ impl Contraption {
     }
 }
 
+pub fn energize(
+    contraption: &mut Rc<Contraption>,
+    direction: Direction,
+    position: Option<(usize, usize)>,
+) -> Box<dyn Iterator<Item = (usize, usize)>> {
+    match position {
+        Some(position) => match Rc::get_mut(contraption).unwrap().get_mut(&position) {
+            Some(deflector) => match deflector {
+                LightDeflector::Mirror(mirror) => match mirror.redirect(direction) {
+                    Some(new_direction) => energize_next(contraption, new_direction, position),
+                    None => Box::new(std::iter::empty()),
+                },
+                LightDeflector::Splitter(splitter) => match splitter.split(direction) {
+                    Some(SplitterOutput::Split([d1, d2])) => {
+                        let p1 = contraption.next_position(position, d1);
+                        let p2 = contraption.next_position(position, d2);
+
+                        let it = energize(contraption, d1, p1).chain(energize(contraption, d2, p2));
+
+                        Box::new(std::iter::once(position).chain(it))
+                    }
+                    Some(SplitterOutput::Continue) => {
+                        energize_next(contraption, direction, position)
+                    }
+                    None => Box::new(std::iter::empty()),
+                },
+            },
+            None => energize_next(contraption, direction, position),
+        },
+        None => Box::new(std::iter::empty()),
+    }
+}
+
+#[inline]
+fn energize_next(
+    contraption: &mut Rc<Contraption>,
+    direction: Direction,
+    position: (usize, usize),
+) -> Box<dyn Iterator<Item = (usize, usize)>> {
+    let new_position = contraption.next_position(position, direction);
+    let it = energize(contraption, direction, new_position);
+
+    Box::new(std::iter::once(position).chain(it))
+}
+
 /// Parses a contraption
 ///
 /// # Errors
 /// If the input is not valid
-pub fn parse_contraption(input: &str) -> Result<Contraption> {
+pub fn parse_contraption(input: &str) -> Result<Rc<Contraption>> {
     let height = input.lines().count();
     let length = input.lines().next().context("Input not empty")?.len();
 
@@ -201,9 +244,9 @@ pub fn parse_contraption(input: &str) -> Result<Contraption> {
         })
         .collect::<Result<_>>()?;
 
-    Ok(Contraption {
+    Ok(Rc::new(Contraption {
         matrix,
         length,
         height,
-    })
+    }))
 }
