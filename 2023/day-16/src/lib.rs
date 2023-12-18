@@ -71,6 +71,7 @@ impl Mirror {
         }
     }
 
+    #[must_use]
     pub const fn get_redirected_direction(&self, direction: Direction) -> Direction {
         match self.mirror_type {
             MirrorType::Left => match direction {
@@ -166,6 +167,7 @@ impl DerefMut for Contraption {
 }
 
 impl Contraption {
+    #[must_use]
     pub fn next_position(
         &self,
         (x, y): (usize, usize),
