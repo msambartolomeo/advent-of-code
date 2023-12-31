@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -11,27 +11,12 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
+fn process(input: &str) -> Result<usize> {
     let (pipes, start) = day_10::parse_pipes(input)?;
 
-    let pipe = pipes.get(start).context("Starting pipe must exist")?;
-    let mut position = start;
-    let mut coordinate = pipe.openings()[0];
+    let result = pipes.pipe_loop(start).count() / 2;
 
-    let mut count = 0;
-    loop {
-        (position, coordinate) = pipes
-            .get_next(position, coordinate)
-            .context("Must form a loop")?;
-
-        count += 1;
-
-        if position == start {
-            break;
-        }
-    }
-
-    Ok(count / 2)
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -73,7 +58,7 @@ SJLL7
 LJ.LJ",
         8
     )]
-    fn test_square(#[case] input: &str, #[case] expected: u32) {
+    fn test_example(#[case] input: &str, #[case] expected: usize) {
         let result = process(input).unwrap();
 
         assert_eq!(expected, result);

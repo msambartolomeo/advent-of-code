@@ -32,7 +32,7 @@ impl Coordinate {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Pipe {
     Vertical,
     Horizontal,
@@ -44,7 +44,7 @@ pub enum Pipe {
 
 impl Pipe {
     #[must_use]
-    pub const fn openings(&self) -> [Coordinate; 2] {
+    pub const fn openings(self) -> [Coordinate; 2] {
         match self {
             Pipe::Vertical => [Coordinate::North, Coordinate::South],
             Pipe::Horizontal => [Coordinate::East, Coordinate::West],
@@ -56,7 +56,7 @@ impl Pipe {
     }
 
     #[must_use]
-    pub fn get_exit(&self, entrance: &Coordinate) -> Option<Coordinate> {
+    pub fn get_exit(self, entrance: &Coordinate) -> Option<Coordinate> {
         let openings = self.openings();
         if openings.contains(entrance) {
             openings.iter().find(|&c| c != entrance).copied()
@@ -134,7 +134,7 @@ impl Display for Pipe {
 type Position = (usize, usize);
 
 pub struct Pipes {
-    matrix: Vec<Vec<Option<Pipe>>>,
+    pub matrix: Vec<Vec<Option<Pipe>>>,
     length: usize,
     height: usize,
 }
@@ -181,6 +181,30 @@ impl Pipes {
         } else {
             None
         }
+    }
+
+    /// # Precondition
+    /// The pipes matrix must have a loop and the start position must be part of that loop
+    pub fn pipe_loop(&self, start: Position) -> impl Iterator<Item = Position> + '_ {
+        let pipe = self.get(start).expect("Start position must exist");
+        let mut position = start;
+        let mut coordinate = pipe.openings()[0];
+
+        std::iter::once(start).chain(std::iter::from_fn(move || {
+            (position, coordinate) = self.get_next(position, coordinate)?;
+            (position != start).then_some(position)
+        }))
+    }
+
+    #[must_use]
+    pub fn pipe_loop_matrix(&self, start: Position) -> Vec<Vec<bool>> {
+        let mut matrix = vec![vec![false; self.length]; self.height];
+
+        for (x, y) in self.pipe_loop(start) {
+            matrix[y][x] = true;
+        }
+
+        matrix
     }
 }
 
