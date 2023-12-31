@@ -24,11 +24,7 @@ fn process(input: &str) -> Result<u32> {
         let mut last_bend: Option<Pipe> = None;
 
         for (pipe, is_loop) in row.into_iter().zip(is_loop_row) {
-            if !is_loop {
-                if loop_counter % 2 == 1 {
-                    result += 1;
-                }
-            } else {
+            if is_loop {
                 match pipe {
                     Some(Pipe::Horizontal) | None => (),
                     Some(Pipe::Vertical) => loop_counter += 1,
@@ -47,6 +43,8 @@ fn process(input: &str) -> Result<u32> {
                         }
                     }
                 }
+            } else if loop_counter % 2 == 1 {
+                result += 1;
             }
         }
     }

@@ -185,6 +185,9 @@ impl Pipes {
 
     /// # Precondition
     /// The pipes matrix must have a loop and the start position must be part of that loop
+    ///
+    /// # Panics
+    /// The starting position must belong to a pipe
     pub fn pipe_loop(&self, start: Position) -> impl Iterator<Item = Position> + '_ {
         let pipe = self.get(start).expect("Start position must exist");
         let mut position = start;
@@ -223,6 +226,8 @@ impl Display for Pipes {
     }
 }
 
+/// # Errors
+/// If the pipe map has incorrect pipes
 pub fn parse_pipes(input: &str) -> Result<(Pipes, Position)> {
     let mut start = None;
 
