@@ -12,7 +12,7 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
+fn process(input: &str) -> Result<u64> {
     let records = day_12::parse_spring_records(input);
 
     let result =
@@ -48,7 +48,7 @@ mod tests {
     #[case("????.#...#... 4,1,1", 1)]
     #[case("????.######..#####. 1,6,5", 4)]
     #[case("?###???????? 3,2,1", 10)]
-    fn test_each(#[case] input: &str, #[case] expected: u32) -> Result<()> {
+    fn test_each(#[case] input: &str, #[case] expected: u64) -> Result<()> {
         let record = day_12::parse_record(input)?;
 
         let result = day_12::unknown_spring_posibilities(&record);

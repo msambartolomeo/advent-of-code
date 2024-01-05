@@ -22,7 +22,7 @@ impl TryFrom<char> for Spring {
 
 pub type Record = (Vec<Spring>, Vec<u32>);
 
-pub fn unknown_spring_posibilities(record: &Record) -> u32 {
+pub fn unknown_spring_posibilities(record: &Record) -> u64 {
     unknown_spring_posibilities_rec(&record.0, &record.1, 0)
 }
 
@@ -30,7 +30,7 @@ fn unknown_spring_posibilities_rec(
     springs: &[Spring],
     damaged_groups: &[u32],
     damaged_count: u32,
-) -> u32 {
+) -> u64 {
     match springs.split_first() {
         Some((Spring::Operational, springs)) => {
             if damaged_groups.first() == Some(&damaged_count) {
@@ -61,7 +61,7 @@ fn unknown_spring_posibilities_rec(
 
             damaged_posibilities + operational_posibilities
         }
-        None => u32::from(
+        None => u64::from(
             damaged_groups.is_empty()
                 || (damaged_groups.len() == 1 && damaged_groups[0] == damaged_count),
         ),
