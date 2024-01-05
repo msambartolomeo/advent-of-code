@@ -22,6 +22,16 @@ impl TryFrom<char> for Spring {
 
 pub type Record = (Vec<Spring>, Vec<u32>);
 
+pub fn repeat_record((springs, damaged): Record, times: usize) -> Record {
+    let damaged = std::iter::repeat(damaged).take(times).flatten().collect();
+    let springs = std::iter::repeat(springs)
+        .take(times)
+        .collect::<Vec<_>>()
+        .join(&Spring::Unknown);
+
+    (springs, damaged)
+}
+
 pub fn unknown_spring_posibilities(record: &Record) -> u64 {
     unknown_spring_posibilities_rec(&record.0, &record.1, 0)
 }
