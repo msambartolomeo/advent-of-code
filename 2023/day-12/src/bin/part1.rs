@@ -1,5 +1,4 @@
 use anyhow::Result;
-use itertools::Itertools;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn main() -> Result<()> {

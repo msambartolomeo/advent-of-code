@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use anyhow::{bail, Context, Result};
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Spring {
@@ -116,6 +115,9 @@ fn unknown_spring_posibilities_rec<'a>(
     result
 }
 
+/// Calls the parse function for each spring record
+/// # Errors
+/// Errors if any record is invalid
 pub fn parse_spring_records(input: &str) -> Result<Vec<Record>> {
     input.lines().map(parse_record).collect()
 }
