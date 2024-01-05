@@ -24,6 +24,7 @@ impl TryFrom<char> for Spring {
 
 pub type Record = (Vec<Spring>, Vec<u32>);
 
+#[must_use]
 pub fn repeat_record((springs, damaged): Record, times: usize) -> Record {
     let damaged = std::iter::repeat(damaged).take(times).flatten().collect();
     let springs = std::iter::repeat(springs)
@@ -34,76 +35,83 @@ pub fn repeat_record((springs, damaged): Record, times: usize) -> Record {
     (springs, damaged)
 }
 
+#[must_use]
 pub fn unknown_spring_posibilities(record: Record) -> u64 {
     let mut cache = HashMap::new();
 
     unknown_spring_posibilities_rec(Box::from(record.0), &record.1, 0, &mut cache)
 }
 
+type CacheData<'a> = (Box<[Spring]>, &'a [u32], u32);
+
+#[must_use]
 fn unknown_spring_posibilities_rec<'a>(
     springs: Box<[Spring]>,
     damaged_groups: &'a [u32],
     damaged_count: u32,
-    cache: &mut HashMap<(Box<[Spring]>, &'a [u32], u32), u64>,
+    cache: &mut HashMap<CacheData<'a>, u64>,
 ) -> u64 {
-    let result = match cache.get(&(springs.clone(), damaged_groups, damaged_count)) {
-        Some(result) => *result,
-        None => {
-            let result = match springs.split_first() {
-                Some((Spring::Operational, springs)) => {
-                    let springs = Box::from(springs);
-                    if damaged_groups.first() == Some(&damaged_count) {
-                        unknown_spring_posibilities_rec(springs, &damaged_groups[1..], 0, cache)
-                    } else if damaged_count == 0 {
-                        unknown_spring_posibilities_rec(springs, damaged_groups, 0, cache)
-                    } else {
-                        0
-                    }
+    let cache_data = (springs, damaged_groups, damaged_count);
+
+    let result = if let Some(result) = cache.get(&cache_data) {
+        *result
+    } else {
+        let (springs, damaged_groups, damaged_count) = cache_data;
+        let result = match springs.split_first() {
+            Some((Spring::Operational, springs)) => {
+                let springs = Box::from(springs);
+                if damaged_groups.first() == Some(&damaged_count) {
+                    unknown_spring_posibilities_rec(springs, &damaged_groups[1..], 0, cache)
+                } else if damaged_count == 0 {
+                    unknown_spring_posibilities_rec(springs, damaged_groups, 0, cache)
+                } else {
+                    0
                 }
-                Some((Spring::Damaged, springs)) => match damaged_groups.first() {
-                    None => 0,
-                    Some(&group) if group == damaged_count => 0,
-                    _ => unknown_spring_posibilities_rec(
-                        Box::from(springs),
-                        damaged_groups,
-                        damaged_count + 1,
-                        cache,
-                    ),
-                },
-                Some((Spring::Unknown, _)) => {
-                    // Divide into damaged and operational posibilities
-                    let mut springs_clone = springs.to_vec();
-
-                    springs_clone[0] = Spring::Damaged;
-                    let damaged_posibilities = unknown_spring_posibilities_rec(
-                        Box::from(springs_clone),
-                        damaged_groups,
-                        damaged_count,
-                        cache,
-                    );
-
-                    let mut springs_clone = springs.to_vec();
-                    springs_clone[0] = Spring::Operational;
-
-                    let operational_posibilities = unknown_spring_posibilities_rec(
-                        Box::from(springs_clone),
-                        damaged_groups,
-                        damaged_count,
-                        cache,
-                    );
-
-                    damaged_posibilities + operational_posibilities
-                }
-                None => u64::from(
-                    damaged_groups.is_empty()
-                        || (damaged_groups.len() == 1 && damaged_groups[0] == damaged_count),
+            }
+            Some((Spring::Damaged, springs)) => match damaged_groups.first() {
+                None => 0,
+                Some(&group) if group == damaged_count => 0,
+                _ => unknown_spring_posibilities_rec(
+                    Box::from(springs),
+                    damaged_groups,
+                    damaged_count + 1,
+                    cache,
                 ),
-            };
+            },
+            Some((Spring::Unknown, _)) => {
+                // Divide into damaged and operational posibilities
+                let mut springs_clone = springs.to_vec();
 
-            cache.insert((springs, damaged_groups, damaged_count), result);
-            result
-        }
+                springs_clone[0] = Spring::Damaged;
+                let damaged_posibilities = unknown_spring_posibilities_rec(
+                    Box::from(springs_clone),
+                    damaged_groups,
+                    damaged_count,
+                    cache,
+                );
+
+                let mut springs_clone = springs.to_vec();
+                springs_clone[0] = Spring::Operational;
+
+                let operational_posibilities = unknown_spring_posibilities_rec(
+                    Box::from(springs_clone),
+                    damaged_groups,
+                    damaged_count,
+                    cache,
+                );
+
+                damaged_posibilities + operational_posibilities
+            }
+            None => u64::from(
+                damaged_groups.is_empty()
+                    || (damaged_groups.len() == 1 && damaged_groups[0] == damaged_count),
+            ),
+        };
+
+        cache.insert((springs, damaged_groups, damaged_count), result);
+        result
     };
+
     result
 }
 
