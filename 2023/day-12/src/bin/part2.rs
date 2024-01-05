@@ -17,7 +17,7 @@ fn process(input: &str) -> Result<u64> {
 
     let result = records.process_results(|it| {
         it.map(|r| day_12::repeat_record(r, 5))
-            .map(|r| day_12::unknown_spring_posibilities(&r))
+            .map(day_12::unknown_spring_posibilities)
             .sum()
     })?;
 
@@ -55,7 +55,7 @@ mod tests {
         let record = day_12::parse_record(input)?;
 
         let record = day_12::repeat_record(record, 5);
-        let result = day_12::unknown_spring_posibilities(&record);
+        let result = day_12::unknown_spring_posibilities(record);
 
         assert_eq!(expected, result);
 

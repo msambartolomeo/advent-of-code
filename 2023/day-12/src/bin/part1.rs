@@ -15,8 +15,7 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u64> {
     let records = day_12::parse_spring_records(input);
 
-    let result =
-        records.process_results(|it| it.map(|r| day_12::unknown_spring_posibilities(&r)).sum())?;
+    let result = records.process_results(|it| it.map(day_12::unknown_spring_posibilities).sum())?;
 
     Ok(result)
 }
@@ -51,7 +50,7 @@ mod tests {
     fn test_each(#[case] input: &str, #[case] expected: u64) -> Result<()> {
         let record = day_12::parse_record(input)?;
 
-        let result = day_12::unknown_spring_posibilities(&record);
+        let result = day_12::unknown_spring_posibilities(record);
 
         assert_eq!(expected, result);
 
