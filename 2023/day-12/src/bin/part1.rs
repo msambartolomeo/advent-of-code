@@ -1,5 +1,6 @@
 use anyhow::Result;
 use day_12::{Record, Spring};
+use itertools::Itertools;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -13,23 +14,23 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u32> {
-    let records = day_12::parse_spring_records(input)?;
+    let records = day_12::parse_spring_records(input);
 
-    let result = records.into_iter().map(unknown_spring_posibilities).sum();
+    let result = records.process_results(|it| it.map(|r| unknown_spring_posibilities(&r)).sum())?;
 
     Ok(result)
 }
 
-fn unknown_spring_posibilities(mut record: Record) -> u32 {
-    unknown_spring_posibilities_rec(&mut record.0, &record.1, 0)
+pub fn unknown_spring_posibilities(record: &Record) -> u32 {
+    unknown_spring_posibilities_rec(&record.0, &record.1, 0)
 }
 
 fn unknown_spring_posibilities_rec(
-    springs: &mut [Spring],
+    springs: &[Spring],
     damaged_groups: &[u32],
     damaged_count: u32,
 ) -> u32 {
-    match springs.split_first_mut() {
+    match springs.split_first() {
         Some((Spring::Operational, springs)) => {
             if damaged_groups.first() == Some(&damaged_count) {
                 unknown_spring_posibilities_rec(springs, &damaged_groups[1..], 0)
@@ -44,20 +45,18 @@ fn unknown_spring_posibilities_rec(
             Some(&group) if group == damaged_count => 0,
             _ => unknown_spring_posibilities_rec(springs, damaged_groups, damaged_count + 1),
         },
-        Some((mut first_spring @ Spring::Unknown, _)) => {
+        Some((Spring::Unknown, _)) => {
             // Divide into damaged and operational posibilities
-            *first_spring = Spring::Damaged;
-            let damaged_posibilities =
-                unknown_spring_posibilities_rec(springs, damaged_groups, damaged_count);
+            let mut springs = springs.to_vec();
 
-            first_spring = &mut springs[0];
-            *first_spring = Spring::Operational;
+            springs[0] = Spring::Damaged;
+            let damaged_posibilities =
+                unknown_spring_posibilities_rec(&springs, damaged_groups, damaged_count);
+
+            springs[0] = Spring::Operational;
 
             let operational_posibilities =
-                unknown_spring_posibilities_rec(springs, damaged_groups, damaged_count);
-
-            first_spring = &mut springs[0];
-            *first_spring = Spring::Unknown;
+                unknown_spring_posibilities_rec(&springs, damaged_groups, damaged_count);
 
             damaged_posibilities + operational_posibilities
         }

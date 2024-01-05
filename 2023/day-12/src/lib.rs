@@ -22,10 +22,13 @@ impl TryFrom<char> for Spring {
 
 pub type Record = (Vec<Spring>, Vec<u32>);
 
-pub fn parse_spring_records(input: &str) -> Result<Vec<Record>> {
-    input.lines().map(parse_record).collect()
+pub fn parse_spring_records(input: &str) -> impl Iterator<Item = Result<Record>> + '_ {
+    input.lines().map(parse_record)
 }
 
+/// Parses a spring record composed of a list of springs and then the broken springs groups
+/// # Errors
+/// Errors if the input is not a valid record
 pub fn parse_record(input: &str) -> Result<Record> {
     let (springs, damaged_groups) = input
         .split_once(' ')
