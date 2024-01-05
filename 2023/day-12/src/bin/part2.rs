@@ -1,5 +1,6 @@
 use anyhow::Result;
 use itertools::Itertools;
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -13,13 +14,13 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u64> {
-    let records = day_12::parse_spring_records(input);
+    let records = day_12::parse_spring_records(input)?;
 
-    let result = records.process_results(|it| {
-        it.map(|r| day_12::repeat_record(r, 5))
-            .map(day_12::unknown_spring_posibilities)
-            .sum()
-    })?;
+    let result = records
+        .into_par_iter()
+        .map(|r| day_12::repeat_record(r, 5))
+        .map(day_12::unknown_spring_posibilities)
+        .sum();
 
     Ok(result)
 }
