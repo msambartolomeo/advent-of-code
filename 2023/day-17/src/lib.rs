@@ -1,3 +1,5 @@
+#[cfg(feature = "print_grid")]
+use std::collections::HashMap;
 use std::collections::{BinaryHeap, HashSet};
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -90,6 +92,8 @@ pub struct Node {
 
 #[derive(Debug)]
 pub struct SearchNode {
+    #[cfg(feature = "print_grid")]
+    path: HashMap<Position, ()>,
     city: Rc<City>,
     goal: Position,
     crucible: Rc<dyn Crucible>,
@@ -107,6 +111,8 @@ impl SearchNode {
         };
 
         Self {
+            #[cfg(feature = "print_grid")]
+            path: HashMap::from([((0, 0).into(), ())]),
             city,
             goal,
             heat_loss_count: 0,
@@ -133,6 +139,12 @@ impl SearchNode {
                 };
 
                 Some(SearchNode {
+                    #[cfg(feature = "print_grid")]
+                    path: {
+                        let mut path = self.path.clone();
+                        path.insert(position, ());
+                        path
+                    },
                     city: Rc::clone(&self.city),
                     goal: self.goal,
                     heat_loss_count,
@@ -233,6 +245,19 @@ pub fn get_heat_lost(city: City, crucible: Rc<dyn Crucible>) -> u32 {
                 break;
             }
         }
+    }
+
+    #[cfg(feature = "print_grid")]
+    for y in 0..node.city.height {
+        for x in 0..node.city.length {
+            match node.path.get(&(x, y).into()) {
+                Some(()) => {
+                    print!("#");
+                }
+                None => print!("."),
+            }
+        }
+        println!();
     }
 
     node.heat_lost()
