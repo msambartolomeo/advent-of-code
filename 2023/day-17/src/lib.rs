@@ -1,9 +1,7 @@
-use std::{
-    collections::{BinaryHeap, HashSet},
-    fmt::Debug,
-    hash::Hash,
-    rc::Rc,
-};
+use std::collections::{BinaryHeap, HashSet};
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::rc::Rc;
 
 pub mod parse;
 
@@ -83,58 +81,70 @@ pub trait Crucible: Debug {
     fn can_stop(&self, moved_straight: usize) -> bool;
 }
 
+#[derive(Debug, PartialEq, Eq, Hash)]
+pub struct Node {
+    position: Position,
+    heading: Direction,
+    moved_straight: usize,
+}
+
 #[derive(Debug)]
 pub struct SearchNode {
     city: Rc<City>,
-    position: Position,
     goal: Position,
-    heading: Direction,
-    straight_count: usize,
-    heat_loss_count: u32,
     crucible: Rc<dyn Crucible>,
+    heat_loss_count: u32,
+    node: Node,
 }
 
 impl SearchNode {
     pub fn new(city: Rc<City>, crucible: Rc<dyn Crucible>, direction: Direction) -> Self {
         let goal = (city.length - 1, city.height - 1).into();
+        let node = Node {
+            position: (0, 0).into(),
+            heading: direction,
+            moved_straight: 1,
+        };
 
         Self {
             city,
-            position: (0, 0).into(),
             goal,
-            heading: direction,
-            straight_count: 1,
             heat_loss_count: 0,
             crucible,
+            node,
         }
     }
 
     pub fn succesors(&self) -> impl Iterator<Item = SearchNode> + '_ {
         self.crucible
-            .actions(self.straight_count)
+            .actions(self.node.moved_straight)
             .filter_map(|&action| {
-                let (new_position, direction) = self.next_position(action)?;
-                let straight = if let Actions::Straight = action {
-                    self.straight_count + 1
+                let (position, heading) = self.next_position(action)?;
+                let moved_straight = if let Actions::Straight = action {
+                    self.node.moved_straight + 1
                 } else {
                     1
+                };
+                let heat_loss_count = self.heat_loss_count + u32::from(self.city.get(position));
+                let node = Node {
+                    position,
+                    heading,
+                    moved_straight,
                 };
 
                 Some(SearchNode {
                     city: Rc::clone(&self.city),
-                    position: new_position,
                     goal: self.goal,
-                    heading: direction,
-                    straight_count: straight,
-                    heat_loss_count: self.heat_loss_count + u32::from(self.city.get(new_position)),
+                    heat_loss_count,
                     crucible: Rc::clone(&self.crucible),
+                    node,
                 })
             })
     }
 
     #[must_use]
     fn next_position(&self, action: Actions) -> Option<(Position, Direction)> {
-        let new_direction = match (action, self.heading) {
+        let new_direction = match (action, self.node.heading) {
             (Actions::Left, Direction::North) | (Actions::Right, Direction::South) => {
                 Direction::West
             }
@@ -150,7 +160,7 @@ impl SearchNode {
             (Actions::Straight, direction) => direction,
         };
 
-        let position = self.position.move_to(new_direction)?;
+        let position = self.node.position.move_to(new_direction)?;
 
         self.city
             .contains(position)
@@ -159,7 +169,8 @@ impl SearchNode {
 
     #[must_use]
     pub fn is_goal(&self) -> bool {
-        self.position == self.goal && self.crucible.can_stop(self.straight_count)
+        self.city.distance(self.node.position, self.goal) == 0
+            && self.crucible.can_stop(self.node.moved_straight)
     }
 
     #[must_use]
@@ -169,15 +180,13 @@ impl SearchNode {
 
     #[must_use]
     fn heuristic(&self) -> u32 {
-        u32::try_from(self.city.distance(self.position, self.goal)).unwrap()
+        u32::try_from(self.city.distance(self.node.position, self.goal)).unwrap()
     }
 }
 
 impl PartialEq for SearchNode {
     fn eq(&self, other: &Self) -> bool {
-        self.position == other.position
-            && self.heading == other.heading
-            && self.straight_count == other.straight_count
+        self.node == other.node
     }
 }
 
@@ -201,9 +210,7 @@ impl PartialOrd for SearchNode {
 
 impl Hash for SearchNode {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.position.hash(state);
-        self.heading.hash(state);
-        self.straight_count.hash(state);
+        self.node.hash(state);
     }
 }
 
