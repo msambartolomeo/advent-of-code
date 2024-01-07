@@ -28,6 +28,7 @@ impl From<(usize, usize)> for Position {
 }
 
 impl Position {
+    #[must_use]
     pub fn move_to(&self, direction: Direction) -> Option<Self> {
         Some(match direction {
             Direction::North => (self.x, self.y.checked_sub(1)?).into(),
@@ -46,16 +47,23 @@ pub struct City {
 }
 
 impl City {
+    /// # Panics
+    /// If position is out of the city
+    #[must_use]
     pub fn distance(&self, from: Position, to: Position) -> usize {
         assert!(self.contains(from) && self.contains(to));
 
         to.x - from.x + to.y - from.y
     }
 
+    #[must_use]
     pub fn contains(&self, position: Position) -> bool {
         position.x < self.length && position.y < self.height
     }
 
+    /// # Panics
+    /// If position is out of the city
+    #[must_use]
     pub fn get(&self, position: Position) -> u8 {
         assert!(self.contains(position));
 
@@ -104,7 +112,7 @@ impl SearchNode {
     pub fn succesors(&self) -> impl Iterator<Item = SearchNode> + '_ {
         self.crucible
             .actions(self.straight_count)
-            .filter_map(|action| {
+            .filter_map(|&action| {
                 let (new_position, direction) = self.next_position(action)?;
                 let straight = if let Actions::Straight = action {
                     self.straight_count + 1
@@ -124,16 +132,21 @@ impl SearchNode {
             })
     }
 
-    fn next_position(&self, action: &Actions) -> Option<(Position, Direction)> {
+    #[must_use]
+    fn next_position(&self, action: Actions) -> Option<(Position, Direction)> {
         let new_direction = match (action, self.heading) {
-            (Actions::Left, Direction::North) => Direction::West,
-            (Actions::Left, Direction::South) => Direction::East,
-            (Actions::Left, Direction::East) => Direction::North,
-            (Actions::Left, Direction::West) => Direction::South,
-            (Actions::Right, Direction::North) => Direction::East,
-            (Actions::Right, Direction::South) => Direction::West,
-            (Actions::Right, Direction::East) => Direction::South,
-            (Actions::Right, Direction::West) => Direction::North,
+            (Actions::Left, Direction::North) | (Actions::Right, Direction::South) => {
+                Direction::West
+            }
+            (Actions::Left, Direction::South) | (Actions::Right, Direction::North) => {
+                Direction::East
+            }
+            (Actions::Left, Direction::East) | (Actions::Right, Direction::West) => {
+                Direction::North
+            }
+            (Actions::Left, Direction::West) | (Actions::Right, Direction::East) => {
+                Direction::South
+            }
             (Actions::Straight, direction) => direction,
         };
 
@@ -144,16 +157,19 @@ impl SearchNode {
             .then_some((position, new_direction))
     }
 
+    #[must_use]
     pub fn is_goal(&self) -> bool {
         self.position == self.goal && self.crucible.can_stop(self.straight_count)
     }
 
+    #[must_use]
     pub fn heat_lost(&self) -> u32 {
         self.heat_loss_count
     }
 
+    #[must_use]
     fn heuristic(&self) -> u32 {
-        self.city.distance(self.position, self.goal) as u32
+        u32::try_from(self.city.distance(self.position, self.goal)).unwrap()
     }
 }
 
@@ -191,6 +207,9 @@ impl Hash for SearchNode {
     }
 }
 
+/// # Panics
+/// If there is no posible path to the end of the city
+#[must_use]
 pub fn get_heat_lost(city: City, crucible: Rc<dyn Crucible>) -> u32 {
     let city = Rc::new(city);
     let mut node = SearchNode::new(Rc::clone(&city), Rc::clone(&crucible), Direction::East);
