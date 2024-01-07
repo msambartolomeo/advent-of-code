@@ -107,7 +107,7 @@ impl SearchNode {
         let node = Node {
             position: (0, 0).into(),
             heading: direction,
-            moved_straight: 1,
+            moved_straight: 0,
         };
 
         Self {
