@@ -72,6 +72,7 @@ pub enum Actions {
 
 pub trait Crucible: Debug {
     fn actions(&self, moved_straigth: usize) -> std::slice::Iter<Actions>;
+    fn can_stop(&self, moved_straight: usize) -> bool;
 }
 
 #[derive(Debug)]
@@ -86,15 +87,15 @@ pub struct SearchNode {
 }
 
 impl SearchNode {
-    pub fn new(city: Rc<City>, crucible: Rc<dyn Crucible>) -> Self {
+    pub fn new(city: Rc<City>, crucible: Rc<dyn Crucible>, direction: Direction) -> Self {
         let goal = (city.length - 1, city.height - 1).into();
 
         Self {
             city,
             position: (0, 0).into(),
             goal,
-            heading: Direction::East,
-            straight_count: 0,
+            heading: direction,
+            straight_count: 1,
             heat_loss_count: 0,
             crucible,
         }
@@ -103,12 +104,12 @@ impl SearchNode {
     pub fn succesors(&self) -> impl Iterator<Item = SearchNode> + '_ {
         self.crucible
             .actions(self.straight_count)
-            .filter_map(move |action| {
+            .filter_map(|action| {
                 let (new_position, direction) = self.next_position(action)?;
                 let straight = if let Actions::Straight = action {
                     self.straight_count + 1
                 } else {
-                    0
+                    1
                 };
 
                 Some(SearchNode {
@@ -144,7 +145,7 @@ impl SearchNode {
     }
 
     pub fn is_goal(&self) -> bool {
-        self.position == self.goal
+        self.position == self.goal && self.crucible.can_stop(self.straight_count)
     }
 
     pub fn heat_lost(&self) -> u32 {
@@ -171,7 +172,7 @@ impl Ord for SearchNode {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         (self.heuristic() + self.heat_lost())
             .cmp(&(other.heuristic() + other.heat_lost()))
-            .then(self.heat_lost().cmp(&other.heat_lost()))
+            .then(self.heuristic().cmp(&other.heuristic()))
             .reverse()
     }
 }
@@ -190,8 +191,10 @@ impl Hash for SearchNode {
     }
 }
 
-pub fn get_heat_lost(mut node: SearchNode) -> u32 {
-    let mut posibilities = BinaryHeap::new();
+pub fn get_heat_lost(city: City, crucible: Rc<dyn Crucible>) -> u32 {
+    let city = Rc::new(city);
+    let mut node = SearchNode::new(Rc::clone(&city), Rc::clone(&crucible), Direction::East);
+    let mut posibilities = BinaryHeap::from([SearchNode::new(city, crucible, Direction::South)]);
     let mut cache = HashSet::new();
 
     while !node.is_goal() {

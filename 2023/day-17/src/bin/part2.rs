@@ -17,23 +17,25 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u32> {
     let city = day_17::parse::city(input)?;
 
-    Ok(day_17::get_heat_lost(city, Rc::new(NormalCrucible)))
+    Ok(day_17::get_heat_lost(city, Rc::new(UltraCrucible)))
 }
 
 #[derive(Debug)]
-struct NormalCrucible;
+struct UltraCrucible;
 
-impl Crucible for NormalCrucible {
+impl Crucible for UltraCrucible {
     fn actions(&self, moved_straigth: usize) -> std::slice::Iter<Actions> {
-        if moved_straigth < 3 {
+        if moved_straigth < 4 {
+            [Actions::Straight].iter()
+        } else if moved_straigth < 10 {
             [Actions::Straight, Actions::Right, Actions::Left].iter()
         } else {
             [Actions::Right, Actions::Left].iter()
         }
     }
 
-    fn can_stop(&self, _: usize) -> bool {
-        true
+    fn can_stop(&self, moved_straight: usize) -> bool {
+        moved_straight >= 4
     }
 }
 
@@ -59,7 +61,22 @@ mod tests {
 
         let result = process(input)?;
 
-        assert_eq!(102, result);
+        assert_eq!(94, result);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_unfortunate() -> Result<()> {
+        let input = "111111111111
+999999999991
+999999999991
+999999999991
+999999999991";
+
+        let result = process(input)?;
+
+        assert_eq!(71, result);
 
         Ok(())
     }
