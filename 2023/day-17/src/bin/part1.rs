@@ -1,8 +1,7 @@
-use std::collections::{BinaryHeap, HashSet};
 use std::rc::Rc;
 
-use anyhow::{Context, Result};
-use day_17::SearchNode;
+use anyhow::Result;
+use day_17::{Actions, Crucible, SearchNode};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -18,27 +17,22 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u32> {
     let city = day_17::parse::city(input)?;
 
-    let start = (0, 0).into();
-    let end = (city.length - 1, city.height - 1).into();
+    let first_node = SearchNode::new(Rc::new(city), Rc::new(NormalCrucible));
 
-    let mut node = SearchNode::new(Rc::new(city), start, end);
+    Ok(day_17::get_heat_lost(first_node))
+}
 
-    let mut posibilities = BinaryHeap::new();
-    let mut cache = HashSet::new();
+#[derive(Debug)]
+struct NormalCrucible;
 
-    while !node.is_goal() {
-        posibilities.extend(node.succesors());
-
-        loop {
-            cache.insert(node);
-            node = posibilities.pop().context("A path always exists")?;
-            if !cache.contains(&node) {
-                break;
-            }
+impl Crucible for NormalCrucible {
+    fn actions(&self, moved_straigth: usize) -> std::slice::Iter<Actions> {
+        if moved_straigth < 2 {
+            [Actions::Straight, Actions::Right, Actions::Left].iter()
+        } else {
+            [Actions::Right, Actions::Left].iter()
         }
     }
-
-    Ok(node.heat_lost())
 }
 
 #[cfg(test)]

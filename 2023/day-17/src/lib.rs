@@ -1,6 +1,19 @@
-use std::{hash::Hash, rc::Rc};
+use std::{
+    collections::{BinaryHeap, HashSet},
+    fmt::Debug,
+    hash::Hash,
+    rc::Rc,
+};
 
 pub mod parse;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Position {
@@ -50,14 +63,6 @@ impl City {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Direction {
-    North,
-    South,
-    East,
-    West,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum Actions {
     Straight,
@@ -65,51 +70,57 @@ pub enum Actions {
     Right,
 }
 
+pub trait Crucible: Debug {
+    fn actions(&self, moved_straigth: usize) -> std::slice::Iter<Actions>;
+}
+
 #[derive(Debug)]
 pub struct SearchNode {
-    pub city: Rc<City>,
-    pub position: Position,
+    city: Rc<City>,
+    position: Position,
     goal: Position,
     heading: Direction,
     straight_count: usize,
     heat_loss_count: u32,
+    crucible: Rc<dyn Crucible>,
 }
 
 impl SearchNode {
-    pub fn new(city: Rc<City>, position: Position, goal: Position) -> Self {
+    pub fn new(city: Rc<City>, crucible: Rc<dyn Crucible>) -> Self {
+        let goal = (city.length - 1, city.height - 1).into();
+
         Self {
             city,
-            position,
+            position: (0, 0).into(),
             goal,
             heading: Direction::East,
             straight_count: 0,
             heat_loss_count: 0,
+            crucible,
         }
     }
 
     pub fn succesors(&self) -> impl Iterator<Item = SearchNode> + '_ {
-        let actions = if self.straight_count < 2 {
-            [Actions::Straight, Actions::Right, Actions::Left].iter()
-        } else {
-            [Actions::Right, Actions::Left].iter()
-        };
-
-        actions.filter_map(move |action| {
-            let (new_position, direction) = self.next_position(action)?;
-
-            Some(SearchNode {
-                city: Rc::clone(&self.city),
-                position: new_position,
-                goal: self.goal,
-                heading: direction,
-                straight_count: if let Actions::Straight = action {
+        self.crucible
+            .actions(self.straight_count)
+            .filter_map(move |action| {
+                let (new_position, direction) = self.next_position(action)?;
+                let straight = if let Actions::Straight = action {
                     self.straight_count + 1
                 } else {
                     0
-                },
-                heat_loss_count: self.heat_loss_count + u32::from(self.city.get(new_position)),
+                };
+
+                Some(SearchNode {
+                    city: Rc::clone(&self.city),
+                    position: new_position,
+                    goal: self.goal,
+                    heading: direction,
+                    straight_count: straight,
+                    heat_loss_count: self.heat_loss_count + u32::from(self.city.get(new_position)),
+                    crucible: Rc::clone(&self.crucible),
+                })
             })
-        })
     }
 
     fn next_position(&self, action: &Actions) -> Option<(Position, Direction)> {
@@ -177,4 +188,23 @@ impl Hash for SearchNode {
         self.heading.hash(state);
         self.straight_count.hash(state);
     }
+}
+
+pub fn get_heat_lost(mut node: SearchNode) -> u32 {
+    let mut posibilities = BinaryHeap::new();
+    let mut cache = HashSet::new();
+
+    while !node.is_goal() {
+        posibilities.extend(node.succesors());
+
+        loop {
+            cache.insert(node);
+            node = posibilities.pop().expect("A path always exists");
+            if !cache.contains(&node) {
+                break;
+            }
+        }
+    }
+
+    node.heat_lost()
 }
