@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{bail, ensure, Context, Ok, Result};
+use anyhow::{bail, Context, Ok, Result};
 use itertools::Itertools;
 
 #[derive(Debug, Clone, Copy)]
@@ -16,10 +16,10 @@ impl FromStr for Direction {
 
     fn from_str(s: &str) -> Result<Self> {
         match s {
-            "U" => Ok(Direction::Up),
-            "D" => Ok(Direction::Down),
-            "L" => Ok(Direction::Left),
-            "R" => Ok(Direction::Right),
+            "U" | "3" => Ok(Direction::Up),
+            "D" | "1" => Ok(Direction::Down),
+            "L" | "2" => Ok(Direction::Left),
+            "R" | "0" => Ok(Direction::Right),
             _ => bail!("Invalid direction"),
         }
     }
@@ -27,9 +27,8 @@ impl FromStr for Direction {
 
 #[derive(Debug, Clone, Copy)]
 pub struct RGB {
-    r: u8,
-    g: u8,
-    b: u8,
+    pub meters: u64,
+    pub direction: Direction,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -37,34 +36,38 @@ impl FromStr for RGB {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self> {
-        let mut chars = s.chars();
-        ensure!(chars.next() == Some('#'));
+        let (meters, direction) = s[1..].split_at(5);
+        let meters = u64::from(
+            meters
+                .chars()
+                .rev()
+                .enumerate()
+                .try_fold(0, |acc, (i, c)| {
+                    Some(acc + c.to_digit(16)? * 16u32.pow(i as u32))
+                })
+                .context("Meters must be a 5 digit hex value")?,
+        );
+        let direction = direction.parse()?;
 
-        let (r, g, b) = chars
-            .tuples()
-            .filter_map(|(n, m)| Some(n.to_digit(16)? as u8 * 16 + m.to_digit(16)? as u8))
-            .collect_tuple()
-            .context("6 digits base 16 must be provided")?;
-
-        Ok(RGB { r, g, b })
+        Ok(RGB { meters, direction })
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct DigInstruction {
     pub direction: Direction,
-    pub meters: u32,
+    pub meters: u64,
     pub color: RGB,
 }
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct Position {
-    x: i32,
-    y: i32,
+    x: i64,
+    y: i64,
 }
 
-impl From<(i32, i32)> for Position {
-    fn from((x, y): (i32, i32)) -> Self {
+impl From<(i64, i64)> for Position {
+    fn from((x, y): (i64, i64)) -> Self {
         Position { x, y }
     }
 }
@@ -72,9 +75,9 @@ impl From<(i32, i32)> for Position {
 impl Position {
     #[allow(clippy::cast_possible_wrap)]
     #[must_use]
-    pub fn get_next(&self, direction: Direction, meters: u32) -> Self {
+    pub fn get_next(&self, direction: Direction, meters: u64) -> Self {
         let mut position = *self;
-        let meters = meters as i32;
+        let meters = meters as i64;
 
         match direction {
             Direction::Up => position.y -= meters,
@@ -89,8 +92,8 @@ impl Position {
 
 #[derive(Debug, Default)]
 pub struct ShoeLacePick {
-    value: i32,
-    border_count: u32,
+    value: i64,
+    border_count: u64,
     last_vertex: Position,
 }
 
@@ -100,7 +103,7 @@ impl ShoeLacePick {
         self.last_vertex
     }
 
-    pub fn add_vertex(&mut self, next: Position, border_between_vertices: u32) {
+    pub fn add_vertex(&mut self, next: Position, border_between_vertices: u64) {
         let last = self.last_vertex;
         self.value += last.x * next.y - last.y * next.x;
 
@@ -110,7 +113,7 @@ impl ShoeLacePick {
     }
 
     #[must_use]
-    pub fn finish(self) -> u32 {
+    pub fn finish(self) -> u64 {
         let area = (self.value / 2).unsigned_abs();
 
         let internal = area + 1 - self.border_count / 2;
@@ -130,7 +133,7 @@ fn parse_dig_instruction(input: &str) -> Result<DigInstruction> {
         .map(|(direction, meters, color)| {
             let direction = direction.parse()?;
             let meters = meters.parse()?;
-            let color = color[1..].parse()?;
+            let color = color[1..color.len() - 1].parse()?;
 
             Ok(DigInstruction {
                 direction,

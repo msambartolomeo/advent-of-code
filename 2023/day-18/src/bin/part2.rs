@@ -1,5 +1,5 @@
 use anyhow::Result;
-use day_18::{DigInstruction, ShoeLacePick};
+use day_18::{DigInstruction, ShoeLacePick, RGB};
 use itertools::Itertools;
 
 fn main() -> Result<()> {
@@ -20,7 +20,8 @@ fn process(input: &str) -> Result<u64> {
         .process_results(|it| {
             it.fold(ShoeLacePick::default(), |mut shoelace_pick, instruction| {
                 let DigInstruction {
-                    direction, meters, ..
+                    color: RGB { meters, direction },
+                    ..
                 } = instruction;
 
                 let last_position = shoelace_pick.last_vertex();
@@ -60,7 +61,7 @@ U 2 (#7a21e3)";
 
         let result = process(input)?;
 
-        assert_eq!(62, result);
+        assert_eq!(952408144115, result);
 
         Ok(())
     }
