@@ -28,7 +28,7 @@ fn process(input: &str) -> Result<u64> {
                     RuleResult::Accept => break Some(part.total_rating()),
                     RuleResult::Reject => break None,
                     RuleResult::SendTo(destination) => {
-                        workflow = workflows.get(destination)?.iter()
+                        workflow = workflows.get(destination)?.iter();
                     }
                 }
             }

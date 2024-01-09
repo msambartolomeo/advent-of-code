@@ -18,6 +18,7 @@ pub struct Part {
 }
 
 impl Part {
+    #[must_use]
     fn rating(&self, rating_type: Rating) -> u64 {
         match rating_type {
             Rating::ExtremelyCoolLooking => self.extremely_cool_looking,
@@ -27,6 +28,7 @@ impl Part {
         }
     }
 
+    #[must_use]
     pub fn total_rating(&self) -> u64 {
         self.extremely_cool_looking + self.musical + self.aerodinamic + self.shiny
     }
@@ -41,6 +43,7 @@ pub enum Ordering {
 }
 
 impl Ordering {
+    #[must_use]
     fn reverse(self) -> Self {
         match self {
             Ordering::Less => Ordering::GreaterEq,
@@ -76,13 +79,6 @@ impl Range {
         }
     }
 
-    fn join(self, other: Self) -> Self {
-        Range {
-            left: self.left.max(other.left),
-            right: self.right.min(other.right),
-        }
-    }
-
     fn len(&self) -> u64 {
         self.right - self.left + 1
     }
@@ -96,8 +92,8 @@ pub struct ValidParts {
     shiny: Range,
 }
 
-impl ValidParts {
-    pub fn new() -> Self {
+impl Default for ValidParts {
+    fn default() -> Self {
         let range = Range::new(1, 4000);
         Self {
             extremely_cool_looking: range,
@@ -106,7 +102,9 @@ impl ValidParts {
             shiny: range,
         }
     }
+}
 
+impl ValidParts {
     #[must_use]
     fn decrease(&self, rating: Rating, value: u64, ordering: Ordering) -> Option<Self> {
         let mut valid_parts = *self;
@@ -122,17 +120,7 @@ impl ValidParts {
         .then_some(valid_parts)
     }
 
-    pub fn join(self, other: Self) -> Self {
-        Self {
-            extremely_cool_looking: self
-                .extremely_cool_looking
-                .join(other.extremely_cool_looking),
-            musical: self.musical.join(other.musical),
-            aerodinamic: self.aerodinamic.join(other.aerodinamic),
-            shiny: self.shiny.join(other.shiny),
-        }
-    }
-
+    #[must_use]
     pub fn total_rating(&self) -> u64 {
         self.extremely_cool_looking.len()
             * self.musical.len()
@@ -154,6 +142,7 @@ pub enum Rule<'a> {
 }
 
 impl<'a> Rule<'a> {
+    #[must_use]
     pub fn apply(&self, part: &Part) -> RuleResult {
         match self {
             Rule::Condition {
@@ -176,6 +165,7 @@ impl<'a> Rule<'a> {
         }
     }
 
+    #[must_use]
     pub fn apply_valid_parts(&self, valid_parts: &ValidParts) -> ValidPartsResult {
         match self {
             Rule::Condition {
@@ -212,6 +202,7 @@ pub enum RuleResult<'a> {
 }
 
 impl<'a> RuleResult<'a> {
+    #[must_use]
     fn from_destination(condition: bool, destination: &'a str) -> Self {
         if condition {
             match destination {
@@ -227,6 +218,11 @@ impl<'a> RuleResult<'a> {
 
 pub type Workflow<'a> = Vec<Rule<'a>>;
 
+/// Parses the workflows and parts
+///
+/// # Errors
+/// If the workflows and parts are not separated by two '\n'
+/// or if any workflow or part is not valid
 pub fn parse_workflows_and_parts(input: &str) -> Result<(BTreeMap<&str, Workflow>, Vec<Part>)> {
     let (workflows, parts) = input
         .split_once("\n\n")

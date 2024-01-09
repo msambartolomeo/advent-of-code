@@ -17,7 +17,7 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u64> {
     let (workflows, _) = day_19::parse_workflows_and_parts(input)?;
 
-    let valid_parts = ValidParts::new();
+    let valid_parts = ValidParts::default();
     let mut accepted_parts = Vec::new();
 
     check_valid_parts("in", &workflows, valid_parts, &mut accepted_parts);
@@ -27,7 +27,7 @@ fn process(input: &str) -> Result<u64> {
     Ok(result)
 }
 
-pub fn check_valid_parts(
+fn check_valid_parts(
     name: &str,
     workflows: &BTreeMap<&str, Vec<Rule>>,
     mut valid_parts: ValidParts,
@@ -39,7 +39,7 @@ pub fn check_valid_parts(
         match rule.apply_valid_parts(&valid_parts) {
             ValidPartsResult::Condition(parts_true, parts_false) => {
                 if let Some((parts, result)) = parts_true {
-                    handle_rule_result(result, parts, workflows, accepted_parts);
+                    handle_rule_result(&result, parts, workflows, accepted_parts);
                 }
 
                 if let Some(parts) = parts_false {
@@ -50,7 +50,7 @@ pub fn check_valid_parts(
             }
 
             ValidPartsResult::Direct(result) => {
-                handle_rule_result(result, valid_parts, workflows, accepted_parts);
+                handle_rule_result(&result, valid_parts, workflows, accepted_parts);
             }
         }
     }
@@ -58,19 +58,17 @@ pub fn check_valid_parts(
 
 #[inline]
 fn handle_rule_result(
-    result: RuleResult,
+    result: &RuleResult,
     parts: ValidParts,
     workflows: &BTreeMap<&str, Vec<Rule>>,
     accepted_parts: &mut Vec<ValidParts>,
 ) {
     match result {
         RuleResult::Continue => unreachable!("In each case the continue is handled in another way"),
-        RuleResult::Accept => {
-            accepted_parts.push(parts);
-        }
+        RuleResult::Accept => accepted_parts.push(parts),
         RuleResult::Reject => (),
         RuleResult::SendTo(destination) => {
-            check_valid_parts(destination, workflows, parts, accepted_parts)
+            check_valid_parts(destination, workflows, parts, accepted_parts);
         }
     }
 }
