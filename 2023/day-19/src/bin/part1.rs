@@ -23,7 +23,7 @@ fn process(input: &str) -> Result<u64> {
             loop {
                 let rule = workflow.next()?;
 
-                match rule(part) {
+                match rule.apply(part) {
                     RuleResult::Continue => (),
                     RuleResult::Accept => break Some(part.total_rating()),
                     RuleResult::Reject => break None,

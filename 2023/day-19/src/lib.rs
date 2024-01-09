@@ -3,6 +3,14 @@ use std::collections::BTreeMap;
 
 use anyhow::{bail, Context, Result};
 
+#[derive(Debug, Clone, Copy)]
+pub enum Rating {
+    ExtremelyCoolLooking,
+    Musical,
+    Aerodinamic,
+    Shiny,
+}
+
 pub struct Part {
     extremely_cool_looking: u64,
     musical: u64,
@@ -11,20 +19,13 @@ pub struct Part {
 }
 
 impl Part {
-    fn extremely_cool_looking_rating(&self) -> u64 {
-        self.extremely_cool_looking
-    }
-
-    fn musical_rating(&self) -> u64 {
-        self.musical
-    }
-
-    fn aerodinamic_rating(&self) -> u64 {
-        self.aerodinamic
-    }
-
-    fn shiny_rating(&self) -> u64 {
-        self.shiny
+    fn rating(&self, rating_type: Rating) -> u64 {
+        match rating_type {
+            Rating::ExtremelyCoolLooking => self.extremely_cool_looking,
+            Rating::Musical => self.musical,
+            Rating::Aerodinamic => self.aerodinamic,
+            Rating::Shiny => self.shiny,
+        }
     }
 
     pub fn total_rating(&self) -> u64 {
@@ -32,33 +33,51 @@ impl Part {
     }
 }
 
-pub type Rule<'a> = Box<dyn Fn(&Part) -> RuleResult<'a> + 'a>;
+pub enum Rule<'a> {
+    Condition {
+        rating: Rating,
+        ordering: Ordering,
+        value: u64,
+        destination: &'a str,
+    },
+    Direct {
+        destination: &'a str,
+    },
+}
 
-pub fn rule_builder(
-    condition: Option<(fn(&Part) -> u64, Ordering, u64)>,
-    destination: &str,
-) -> Rule {
-    Box::new(move |part: &Part| -> RuleResult {
-        let condition = if let Some((rating_getter, ordering, value)) = &condition {
-            match ordering {
-                Ordering::Less => rating_getter(part).lt(value),
-                Ordering::Equal => rating_getter(part).eq(value),
-                Ordering::Greater => rating_getter(part).gt(value),
+impl<'a> Rule<'a> {
+    pub fn apply(&self, part: &Part) -> RuleResult {
+        match self {
+            Rule::Condition {
+                rating,
+                ordering,
+                value,
+                destination,
+            } => {
+                let rating = part.rating(*rating);
+                let condition = match ordering {
+                    Ordering::Less => rating.lt(value),
+                    Ordering::Equal => rating.eq(value),
+                    Ordering::Greater => rating.gt(value),
+                };
+
+                if condition {
+                    match *destination {
+                        "A" => RuleResult::Accept,
+                        "R" => RuleResult::Reject,
+                        _ => RuleResult::SendTo(destination),
+                    }
+                } else {
+                    RuleResult::Continue
+                }
             }
-        } else {
-            true
-        };
-
-        if condition {
-            match destination {
+            Rule::Direct { destination } => match *destination {
                 "A" => RuleResult::Accept,
                 "R" => RuleResult::Reject,
                 _ => RuleResult::SendTo(destination),
-            }
-        } else {
-            RuleResult::Continue
+            },
         }
-    })
+    }
 }
 
 pub enum RuleResult<'a> {
@@ -94,15 +113,15 @@ fn parse_workflow(input: &str) -> Result<(&str, Workflow)> {
 
     let rules = rules
         .split(',')
-        .map(|rule| -> Result<Rule> {
+        .map(|rule| {
             if let Some((condition, destination)) = rule.split_once(':') {
                 let mut chars = condition.chars();
 
-                let rating_getter = match chars.next() {
-                    Some('x') => Part::extremely_cool_looking_rating,
-                    Some('m') => Part::musical_rating,
-                    Some('a') => Part::aerodinamic_rating,
-                    Some('s') => Part::shiny_rating,
+                let rating = match chars.next() {
+                    Some('x') => Rating::ExtremelyCoolLooking,
+                    Some('m') => Rating::Musical,
+                    Some('a') => Rating::Aerodinamic,
+                    Some('s') => Rating::Shiny,
                     _ => bail!("Invalid rating"),
                 };
 
@@ -115,11 +134,14 @@ fn parse_workflow(input: &str) -> Result<(&str, Workflow)> {
 
                 let value = condition[2..].parse()?;
 
-                let rule = rule_builder(Some((rating_getter, ordering, value)), destination);
-
-                Ok(rule)
+                Ok(Rule::Condition {
+                    rating,
+                    ordering,
+                    value,
+                    destination,
+                })
             } else {
-                Ok(rule_builder(None, rule))
+                Ok(Rule::Direct { destination: rule })
             }
         })
         .collect::<Result<_>>()?;
