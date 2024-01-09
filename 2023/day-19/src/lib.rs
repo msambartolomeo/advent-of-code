@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::collections::BTreeMap;
 
 use anyhow::{bail, Context, Result};
@@ -33,6 +32,115 @@ impl Part {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+pub enum Ordering {
+    Less,
+    Greater,
+    LessEq,
+    GreaterEq,
+}
+
+impl Ordering {
+    fn reverse(self) -> Self {
+        match self {
+            Ordering::Less => Ordering::GreaterEq,
+            Ordering::Greater => Ordering::LessEq,
+            Ordering::LessEq => Ordering::Greater,
+            Ordering::GreaterEq => Ordering::Less,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Range {
+    left: u64,
+    right: u64,
+}
+
+impl Range {
+    fn new(left: u64, right: u64) -> Self {
+        Self { left, right }
+    }
+
+    fn decrease(&mut self, value: u64, ordering: Ordering) -> bool {
+        if (self.left..=self.right).contains(&value) {
+            match ordering {
+                Ordering::Less => self.right = value - 1,
+                Ordering::LessEq => self.right = value,
+                Ordering::Greater => self.left = value + 1,
+                Ordering::GreaterEq => self.left = value,
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    fn join(self, other: Self) -> Self {
+        Range {
+            left: self.left.max(other.left),
+            right: self.right.min(other.right),
+        }
+    }
+
+    fn len(&self) -> u64 {
+        self.right - self.left + 1
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct ValidParts {
+    extremely_cool_looking: Range,
+    musical: Range,
+    aerodinamic: Range,
+    shiny: Range,
+}
+
+impl ValidParts {
+    pub fn new() -> Self {
+        let range = Range::new(1, 4000);
+        Self {
+            extremely_cool_looking: range,
+            musical: range,
+            aerodinamic: range,
+            shiny: range,
+        }
+    }
+
+    #[must_use]
+    fn decrease(&self, rating: Rating, value: u64, ordering: Ordering) -> Option<Self> {
+        let mut valid_parts = *self;
+
+        match rating {
+            Rating::ExtremelyCoolLooking => {
+                valid_parts.extremely_cool_looking.decrease(value, ordering)
+            }
+            Rating::Musical => valid_parts.musical.decrease(value, ordering),
+            Rating::Aerodinamic => valid_parts.aerodinamic.decrease(value, ordering),
+            Rating::Shiny => valid_parts.shiny.decrease(value, ordering),
+        }
+        .then_some(valid_parts)
+    }
+
+    pub fn join(self, other: Self) -> Self {
+        Self {
+            extremely_cool_looking: self
+                .extremely_cool_looking
+                .join(other.extremely_cool_looking),
+            musical: self.musical.join(other.musical),
+            aerodinamic: self.aerodinamic.join(other.aerodinamic),
+            shiny: self.shiny.join(other.shiny),
+        }
+    }
+
+    pub fn total_rating(&self) -> u64 {
+        self.extremely_cool_looking.len()
+            * self.musical.len()
+            * self.aerodinamic.len()
+            * self.shiny.len()
+    }
+}
+
 pub enum Rule<'a> {
     Condition {
         rating: Rating,
@@ -57,27 +165,43 @@ impl<'a> Rule<'a> {
                 let rating = part.rating(*rating);
                 let condition = match ordering {
                     Ordering::Less => rating.lt(value),
-                    Ordering::Equal => rating.eq(value),
                     Ordering::Greater => rating.gt(value),
+                    Ordering::LessEq => rating.le(value),
+                    Ordering::GreaterEq => rating.ge(value),
                 };
 
-                if condition {
-                    match *destination {
-                        "A" => RuleResult::Accept,
-                        "R" => RuleResult::Reject,
-                        _ => RuleResult::SendTo(destination),
-                    }
-                } else {
-                    RuleResult::Continue
-                }
+                RuleResult::from_destination(condition, destination)
             }
-            Rule::Direct { destination } => match *destination {
-                "A" => RuleResult::Accept,
-                "R" => RuleResult::Reject,
-                _ => RuleResult::SendTo(destination),
-            },
+            Rule::Direct { destination } => RuleResult::from_destination(true, destination),
         }
     }
+
+    pub fn apply_valid_parts(&self, valid_parts: &ValidParts) -> ValidPartsResult {
+        match self {
+            Rule::Condition {
+                rating,
+                ordering,
+                value,
+                destination,
+            } => {
+                let valid_parts_true = valid_parts.decrease(*rating, *value, *ordering);
+                let result = RuleResult::from_destination(true, destination);
+                let valid_parts_true = valid_parts_true.map(|p| (p, result));
+
+                let valid_parts_false = valid_parts.decrease(*rating, *value, ordering.reverse());
+
+                ValidPartsResult::Condition(valid_parts_true, valid_parts_false)
+            }
+            Rule::Direct { destination } => {
+                ValidPartsResult::Direct(RuleResult::from_destination(true, destination))
+            }
+        }
+    }
+}
+
+pub enum ValidPartsResult<'a> {
+    Condition(Option<(ValidParts, RuleResult<'a>)>, Option<ValidParts>),
+    Direct(RuleResult<'a>),
 }
 
 pub enum RuleResult<'a> {
@@ -85,6 +209,20 @@ pub enum RuleResult<'a> {
     Accept,
     Reject,
     SendTo(&'a str),
+}
+
+impl<'a> RuleResult<'a> {
+    fn from_destination(condition: bool, destination: &'a str) -> Self {
+        if condition {
+            match destination {
+                "A" => RuleResult::Accept,
+                "R" => RuleResult::Reject,
+                _ => RuleResult::SendTo(destination),
+            }
+        } else {
+            RuleResult::Continue
+        }
+    }
 }
 
 pub type Workflow<'a> = Vec<Rule<'a>>;
@@ -127,7 +265,6 @@ fn parse_workflow(input: &str) -> Result<(&str, Workflow)> {
 
                 let ordering = match chars.next() {
                     Some('<') => Ordering::Less,
-                    Some('=') => Ordering::Equal,
                     Some('>') => Ordering::Greater,
                     _ => bail!("Invalid ordering"),
                 };
