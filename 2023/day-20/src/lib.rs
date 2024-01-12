@@ -1,37 +1,104 @@
 use std::collections::{BTreeMap, HashMap};
+use std::fmt::Display;
 
 use anyhow::{Context, Result};
 
-#[derive(Debug, Default, PartialEq, Eq)]
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
 pub enum Pulse {
     #[default]
     Low,
     High,
 }
 
-#[derive(Debug)]
-pub struct Order<'a> {
-    pulse: Pulse,
-    reciever: &'a str,
+impl Display for Pulse {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Pulse::Low => f.write_str("low"),
+            Pulse::High => f.write_str("high"),
+        }
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Clone, Copy)]
+pub enum State {
+    On,
+    #[default]
+    Off,
 }
 
 #[derive(Debug)]
+pub struct Order {
+    pub pulse: Pulse,
+    pub sender: String,
+    pub reciever: String,
+}
+
+impl Display for Order {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} -{}-> {}", self.sender, self.pulse, self.reciever)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Module<'a> {
     outputs: Vec<&'a str>,
+    name: &'a str,
     state: ModuleType<'a>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+impl<'a> Module<'a> {
+    pub fn recieve_and_send(
+        &mut self,
+        sender: String,
+        pulse: Pulse,
+    ) -> Box<dyn Iterator<Item = Order> + '_> {
+        let self_name = self.name;
+        if let Some(pulse_to_send) = self.state.recieve_and_send(&sender, pulse) {
+            Box::new(self.outputs.iter().map(move |&output| Order {
+                pulse: pulse_to_send,
+                reciever: output.to_owned(),
+                sender: self_name.to_string(),
+            }))
+        } else {
+            Box::new(std::iter::empty())
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub enum ModuleType<'a> {
-    FlipFlop(bool),
+    FlipFlop(State),
     Conjunction(HashMap<&'a str, Pulse>),
     Broadcast,
 }
 
-impl<'a> Module<'a> {
-    // pub fn send(&self) -> impl Iterator<Item = Order> {
-    //     todo!()
-    // }
+impl<'a> ModuleType<'a> {
+    fn recieve_and_send(&mut self, sender: &str, pulse: Pulse) -> Option<Pulse> {
+        match self {
+            ModuleType::FlipFlop(state) => match pulse {
+                Pulse::Low => match state {
+                    State::On => {
+                        *state = State::Off;
+                        Some(Pulse::Low)
+                    }
+                    State::Off => {
+                        *state = State::On;
+                        Some(Pulse::High)
+                    }
+                },
+                Pulse::High => None,
+            },
+            ModuleType::Conjunction(map) => {
+                *map.get_mut(sender)? = pulse;
+
+                map.values()
+                    .all(|&p| p == Pulse::High)
+                    .then_some(Pulse::Low)
+                    .or(Some(Pulse::High))
+            }
+            ModuleType::Broadcast => Some(pulse),
+        }
+    }
 }
 
 pub fn parse_module_configuration(input: &str) -> Result<BTreeMap<&str, Module>> {
@@ -68,13 +135,17 @@ fn parse_module(input: &str) -> Result<(&str, Module)> {
     let outputs = outputs.split(", ").collect::<Vec<_>>();
 
     let (name, state) = match name.chars().next() {
-        Some('%') => (&name[1..], ModuleType::FlipFlop(false)),
+        Some('%') => (&name[1..], ModuleType::FlipFlop(State::default())),
         Some('&') => (&name[1..], ModuleType::Conjunction(HashMap::default())),
         Some(_) if name == "broadcaster" => (name, ModuleType::Broadcast),
         _ => unreachable!("Invalid module type"),
     };
 
-    let module = Module { outputs, state };
+    let module = Module {
+        outputs,
+        state,
+        name,
+    };
 
     Ok((name, module))
 }
