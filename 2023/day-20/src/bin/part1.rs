@@ -67,7 +67,7 @@ fn push_button(modules: &mut BTreeMap<&str, Module>) -> Vec<Pulse> {
             continue;
         };
 
-        let new_orders = reciever.recieve_and_send(order.sender, order.pulse);
+        let new_orders = reciever.recieve_and_send(&order.sender, order.pulse);
 
         orders.extend(new_orders);
     }

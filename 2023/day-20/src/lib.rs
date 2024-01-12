@@ -49,11 +49,11 @@ pub struct Module<'a> {
 impl<'a> Module<'a> {
     pub fn recieve_and_send(
         &mut self,
-        sender: String,
+        sender: &str,
         pulse: Pulse,
     ) -> Box<dyn Iterator<Item = Order> + '_> {
         let self_name = self.name;
-        if let Some(pulse_to_send) = self.state.recieve_and_send(&sender, pulse) {
+        if let Some(pulse_to_send) = self.state.recieve_and_send(sender, pulse) {
             Box::new(self.outputs.iter().map(move |&output| Order {
                 pulse: pulse_to_send,
                 reciever: output.to_owned(),
@@ -101,6 +101,10 @@ impl<'a> ModuleType<'a> {
     }
 }
 
+/// Parses module configuration creating the initializing the modules state
+///
+/// # Errors
+/// If a module's format is not valid
 pub fn parse_module_configuration(input: &str) -> Result<BTreeMap<&str, Module>> {
     let mut map = input
         .lines()
@@ -143,8 +147,8 @@ fn parse_module(input: &str) -> Result<(&str, Module)> {
 
     let module = Module {
         outputs,
-        state,
         name,
+        state,
     };
 
     Ok((name, module))
