@@ -41,9 +41,9 @@ impl Display for Order {
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Module<'a> {
-    outputs: Vec<&'a str>,
-    name: &'a str,
-    state: ModuleType<'a>,
+    pub outputs: Vec<&'a str>,
+    pub name: &'a str,
+    pub state: ModuleType<'a>,
 }
 
 impl<'a> Module<'a> {
