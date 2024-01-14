@@ -11,7 +11,7 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u32> {
+fn process(input: &str) -> Result<u64> {
     todo!()
 }
 
@@ -20,5 +20,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_example() {}
+    fn test_example() -> Result<()> {
+        let expected: u64 = todo!();
+        let input = todo!();
+
+        let result = process(input)?;
+
+        assert_eq!(expected, result);
+
+        Ok(())
+    }
 }
