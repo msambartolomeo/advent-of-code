@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::hash::Hash;
 
 use anyhow::Result;
 
@@ -20,7 +19,8 @@ fn process(input: &str, steps: u32) -> Result<u64> {
     let garden = day_21::parse_garden(input)?;
 
     let mut frontier = HashSet::from([garden.start()]);
-    let mut switcher = Switcher::default();
+    let mut last_frontier = HashSet::default();
+    let mut switcher = Switcher::<u64>::default();
     switcher.init();
 
     for _ in 0..steps {
@@ -29,70 +29,67 @@ fn process(input: &str, steps: u32) -> Result<u64> {
             .flat_map(|&pos| {
                 pos.next().filter_map(|p| match garden.get(p)? {
                     Feature::Plot => {
-                        (!frontier.contains(&p) && !switcher.contains(&p)).then_some(p)
+                        (!frontier.contains(&p) && !last_frontier.contains(&p)).then_some(p)
                     }
                     Feature::Rock => None,
                 })
             })
             .collect::<HashSet<_>>();
 
-        let current = switcher.get_current();
+        *switcher.get_current() += frontier.len() as u64;
 
-        current.extend(frontier.into_iter());
+        last_frontier = frontier;
+        frontier = new_frontier;
 
         switcher.switch();
-
-        frontier = new_frontier;
     }
 
-    let result = frontier.len() as u64 + switcher.get_current().len() as u64;
+    let result = *switcher.get_current() + frontier.len() as u64;
 
     Ok(result)
 }
 
 #[derive(Debug)]
-struct Switcher<T: Hash + Eq> {
-    v1: HashSet<T>,
-    v2: HashSet<T>,
-    current: *mut HashSet<T>,
+struct Switcher<T> {
+    v1: T,
+    v2: T,
+    current: *mut T,
+    other: *mut T,
 }
 
-impl<T: Hash + Eq> Default for Switcher<T> {
+impl<T: Default> Default for Switcher<T> {
     fn default() -> Self {
         Self {
-            v1: HashSet::default(),
-            v2: HashSet::default(),
+            v1: Default::default(),
+            v2: Default::default(),
             current: std::ptr::null_mut(),
+            other: std::ptr::null_mut(),
         }
     }
 }
 
-impl<T: Hash + Eq> Switcher<T> {
+impl<T> Switcher<T> {
     fn init(&mut self) {
         self.current = &mut self.v1;
+        self.other = &mut self.v2;
+    }
+
+    fn is_init(&mut self) -> bool {
+        (self.current == &mut self.v1 || self.current == &mut self.v2)
+            && (self.other == &mut self.v1 || self.other == &mut self.v2)
     }
 
     #[must_use]
-    fn get_current(&mut self) -> &mut HashSet<T> {
-        assert!(!self.current.is_null(), "Must initialize Switcher");
+    fn get_current(&mut self) -> &mut T {
+        assert!(self.is_init(), "Must initialize Switcher");
 
         unsafe { &mut *self.current }
     }
 
-    fn switch(&mut self) -> &mut HashSet<T> {
-        if self.current == &mut self.v1 {
-            self.current = &mut self.v2;
-        } else if self.current == &mut self.v2 {
-            self.current = &mut self.v1;
-        } else {
-            panic!("Must initialize switcher")
-        }
+    fn switch(&mut self) -> &mut T {
+        std::mem::swap(&mut self.current, &mut self.other);
 
         self.get_current()
-    }
-
-    fn contains(&self, other: &T) -> bool {
-        self.v1.contains(other) || self.v2.contains(other)
     }
 }
 
