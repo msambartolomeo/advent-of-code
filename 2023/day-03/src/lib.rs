@@ -28,7 +28,7 @@ pub struct Position {
 
 impl From<(usize, usize)> for Position {
     fn from((x, y): (usize, usize)) -> Self {
-        Position { x, y }
+        Self { x, y }
     }
 }
 
@@ -36,7 +36,7 @@ impl TryFrom<(i128, i128)> for Position {
     type Error = TryFromIntError;
 
     fn try_from((x, y): (i128, i128)) -> Result<Self, Self::Error> {
-        Ok(Position {
+        Ok(Self {
             x: x.try_into()?,
             y: y.try_into()?,
         })
@@ -177,10 +177,7 @@ pub fn parse_schematic(schematic: &str) -> Result<Schematic> {
 
 #[must_use]
 fn add_next_ten(n: Option<u64>, m: u64) -> u64 {
-    match n {
-        Some(n) => n * 10 + m,
-        None => m,
-    }
+    n.map_or(m, |n| n * 10 + m)
 }
 
 #[cfg(test)]

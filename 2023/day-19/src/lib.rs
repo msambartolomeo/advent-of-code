@@ -19,7 +19,7 @@ pub struct Part {
 
 impl Part {
     #[must_use]
-    fn rating(&self, rating_type: Rating) -> u64 {
+    const fn rating(&self, rating_type: Rating) -> u64 {
         match rating_type {
             Rating::ExtremelyCoolLooking => self.extremely_cool_looking,
             Rating::Musical => self.musical,
@@ -29,7 +29,7 @@ impl Part {
     }
 
     #[must_use]
-    pub fn total_rating(&self) -> u64 {
+    pub const fn total_rating(&self) -> u64 {
         self.extremely_cool_looking + self.musical + self.aerodinamic + self.shiny
     }
 }
@@ -44,12 +44,12 @@ pub enum Ordering {
 
 impl Ordering {
     #[must_use]
-    fn reverse(self) -> Self {
+    const fn reverse(self) -> Self {
         match self {
-            Ordering::Less => Ordering::GreaterEq,
-            Ordering::Greater => Ordering::LessEq,
-            Ordering::LessEq => Ordering::Greater,
-            Ordering::GreaterEq => Ordering::Less,
+            Self::Less => Self::GreaterEq,
+            Self::Greater => Self::LessEq,
+            Self::LessEq => Self::Greater,
+            Self::GreaterEq => Self::Less,
         }
     }
 }
@@ -61,7 +61,7 @@ struct Range {
 }
 
 impl Range {
-    fn new(left: u64, right: u64) -> Self {
+    const fn new(left: u64, right: u64) -> Self {
         Self { left, right }
     }
 
@@ -79,7 +79,7 @@ impl Range {
         }
     }
 
-    fn len(&self) -> u64 {
+    const fn len(&self) -> u64 {
         self.right - self.left + 1
     }
 }
@@ -121,7 +121,7 @@ impl ValidParts {
     }
 
     #[must_use]
-    pub fn total_rating(&self) -> u64 {
+    pub const fn total_rating(&self) -> u64 {
         self.extremely_cool_looking.len()
             * self.musical.len()
             * self.aerodinamic.len()

@@ -23,7 +23,7 @@ fn process(input: &str) -> Result<usize> {
 
     let result = mirrors
         .into_iter()
-        .filter_map(|m| find_mirror(&m.rows()).or(find_mirror(&m.columns())))
+        .filter_map(|m| find_mirror(&m.rows()).or_else(|| find_mirror(&m.columns())))
         .fold(0, |sum, idx| match idx {
             Direction::Vertical(idx) => sum + idx,
             Direction::Horizontal(idx) => sum + 100 * idx,

@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use anyhow::{bail, ensure, Context, Error, Ok, Result};
+use anyhow::{bail, ensure, Context, Ok, Result};
 
 #[derive(Debug)]
 pub struct AlmanacMap {
@@ -17,11 +17,9 @@ impl AlmanacMap {
             .iter()
             .find(|c| c.source_range.contains(&number));
 
-        if let Some(converter) = converter {
-            converter.destination_range.start + number - converter.source_range.start
-        } else {
-            number
-        }
+        converter.map_or(number, |c| {
+            c.destination_range.start + number - c.source_range.start
+        })
     }
 }
 
@@ -32,16 +30,16 @@ pub struct MapRangeConverter {
 }
 
 impl TryFrom<Vec<u64>> for MapRangeConverter {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(value: Vec<u64>) -> Result<Self, Self::Error> {
+    fn try_from(value: Vec<u64>) -> Result<Self> {
         ensure!(value.len() >= 3, "Vector should have at least 3 elements");
 
         let destination_start = value[0];
         let source_start = value[1];
         let length = value[2];
 
-        Ok(MapRangeConverter {
+        Ok(Self {
             destination_range: destination_start..destination_start + length,
             source_range: source_start..source_start + length,
         })
@@ -61,18 +59,18 @@ pub enum AlmanacMapCategory {
 }
 
 impl TryFrom<&str> for AlmanacMapCategory {
-    type Error = Error;
+    type Error = anyhow::Error;
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+    fn try_from(value: &str) -> Result<Self> {
         Ok(match value {
-            "seed" => AlmanacMapCategory::Seed,
-            "soil" => AlmanacMapCategory::Soil,
-            "fertilizer" => AlmanacMapCategory::Fertilizer,
-            "water" => AlmanacMapCategory::Water,
-            "light" => AlmanacMapCategory::Light,
-            "temperature" => AlmanacMapCategory::Temperature,
-            "humidity" => AlmanacMapCategory::Humidity,
-            "location" => AlmanacMapCategory::Location,
+            "seed" => Self::Seed,
+            "soil" => Self::Soil,
+            "fertilizer" => Self::Fertilizer,
+            "water" => Self::Water,
+            "light" => Self::Light,
+            "temperature" => Self::Temperature,
+            "humidity" => Self::Humidity,
+            "location" => Self::Location,
             _ => bail!("Invalid category"),
         })
     }

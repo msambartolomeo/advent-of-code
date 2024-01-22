@@ -16,7 +16,7 @@ pub enum SplitterOutput {
 }
 
 impl Splitter {
-    fn new(splitter_type: SplitterType) -> Self {
+    const fn new(splitter_type: SplitterType) -> Self {
         Self {
             splitter_type,
             energized: false,
@@ -63,7 +63,7 @@ pub enum MirrorType {
 }
 
 impl Mirror {
-    fn new(mirror_type: MirrorType) -> Self {
+    const fn new(mirror_type: MirrorType) -> Self {
         Self {
             mirror_type,
             left_energized: false,
@@ -122,14 +122,10 @@ impl TryFrom<char> for LightDeflector {
 
     fn try_from(value: char) -> Result<Self> {
         match value {
-            '/' => Ok(LightDeflector::Mirror(Mirror::new(MirrorType::Left))),
-            '\\' => Ok(LightDeflector::Mirror(Mirror::new(MirrorType::Right))),
-            '-' => Ok(LightDeflector::Splitter(Splitter::new(
-                SplitterType::Horizontal,
-            ))),
-            '|' => Ok(LightDeflector::Splitter(Splitter::new(
-                SplitterType::Vertical,
-            ))),
+            '/' => Ok(Self::Mirror(Mirror::new(MirrorType::Left))),
+            '\\' => Ok(Self::Mirror(Mirror::new(MirrorType::Right))),
+            '-' => Ok(Self::Splitter(Splitter::new(SplitterType::Horizontal))),
+            '|' => Ok(Self::Splitter(Splitter::new(SplitterType::Vertical))),
             _ => bail!("Invalid light deflector Type"),
         }
     }
@@ -174,10 +170,10 @@ impl Contraption {
         direction: Direction,
     ) -> Option<(usize, usize)> {
         match direction {
-            Direction::Up => (y != 0).then(|| (x, y - 1)),
-            Direction::Down => (y != self.height - 1).then(|| (x, y + 1)),
-            Direction::Left => (x != 0).then(|| (x - 1, y)),
-            Direction::Right => (x != self.length - 1).then(|| (x + 1, y)),
+            Direction::Up => Some((x, y.checked_sub(1)?)),
+            Direction::Down => (y != self.height - 1).then_some((x, y + 1)),
+            Direction::Left => Some((x.checked_sub(1)?, y)),
+            Direction::Right => (x != self.length - 1).then_some((x + 1, y)),
         }
     }
 
@@ -186,13 +182,14 @@ impl Contraption {
         direction: Direction,
         position: Option<(usize, usize)>,
     ) -> Box<dyn Iterator<Item = (usize, usize)>> {
-        match position {
-            Some(position) => match self.get_mut(&position) {
+        position.map_or_else(
+            || Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _>>,
+            |position| match self.get_mut(&position) {
                 Some(deflector) => match deflector {
-                    LightDeflector::Mirror(mirror) => match mirror.redirect(direction) {
-                        Some(new_direction) => self.energize_next(new_direction, position),
-                        None => Box::new(std::iter::empty()),
-                    },
+                    LightDeflector::Mirror(mirror) => mirror.redirect(direction).map_or_else(
+                        || Box::new(std::iter::empty()) as Box<dyn Iterator<Item = _>>,
+                        |new_direction| self.energize_next(new_direction, position),
+                    ),
                     LightDeflector::Splitter(splitter) => match splitter.split(direction) {
                         Some(SplitterOutput::Split([d1, d2])) => {
                             let p1 = self.next_position(position, d1);
@@ -208,8 +205,7 @@ impl Contraption {
                 },
                 None => self.energize_next(direction, position),
             },
-            None => Box::new(std::iter::empty()),
-        }
+        )
     }
 
     #[inline]

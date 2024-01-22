@@ -57,7 +57,7 @@ impl City {
     }
 
     #[must_use]
-    pub fn contains(&self, position: Position) -> bool {
+    pub const fn contains(&self, position: Position) -> bool {
         position.x < self.length && position.y < self.height
     }
 
@@ -121,12 +121,12 @@ impl SearchNode {
         }
     }
 
-    pub fn succesors(&self) -> impl Iterator<Item = SearchNode> + '_ {
+    pub fn succesors(&self) -> impl Iterator<Item = Self> + '_ {
         self.crucible
             .actions(self.node.moved_straight)
             .filter_map(|&action| {
                 let (position, heading) = self.next_position(action)?;
-                let moved_straight = if let Actions::Straight = action {
+                let moved_straight = if matches!(action, Actions::Straight) {
                     self.node.moved_straight + 1
                 } else {
                     1
@@ -138,7 +138,7 @@ impl SearchNode {
                     moved_straight,
                 };
 
-                Some(SearchNode {
+                Some(Self {
                     #[cfg(feature = "print_grid")]
                     path: {
                         let mut path = self.path.clone();
@@ -186,13 +186,14 @@ impl SearchNode {
     }
 
     #[must_use]
-    pub fn heat_lost(&self) -> u32 {
+    pub const fn heat_lost(&self) -> u32 {
         self.heat_loss_count
     }
 
     #[must_use]
     fn heuristic(&self) -> u32 {
-        u32::try_from(self.city.distance(self.node.position, self.goal)).unwrap()
+        u32::try_from(self.city.distance(self.node.position, self.goal))
+            .expect("Must find distance")
     }
 }
 

@@ -38,7 +38,7 @@ impl<C: Card, T: HandType<C>> FromStr for CamelHand<C, T> {
 
         let hand_type = T::from_cards(&cards);
 
-        Ok(CamelHand { cards, hand_type })
+        Ok(Self { cards, hand_type })
     }
 }
 

@@ -29,7 +29,7 @@ fn process(input: &str) -> Result<u32> {
                     Some(Pipe::Horizontal) | None => (),
                     Some(Pipe::Vertical) => loop_counter += 1,
                     Some(bend) => {
-                        if let Some(last_bend) = last_bend.take() {
+                        last_bend = last_bend.map_or(Some(bend), |last_bend| {
                             let continue_vertical = !bend
                                 .openings()
                                 .iter()
@@ -38,9 +38,8 @@ fn process(input: &str) -> Result<u32> {
                             if continue_vertical {
                                 loop_counter += 1;
                             }
-                        } else {
-                            last_bend = Some(bend);
-                        }
+                            None
+                        });
                     }
                 }
             } else if loop_counter % 2 == 1 {

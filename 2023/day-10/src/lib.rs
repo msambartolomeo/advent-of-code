@@ -13,21 +13,21 @@ pub enum Coordinate {
 
 impl Coordinate {
     #[must_use]
-    pub fn contrary(self) -> Self {
+    pub const fn contrary(self) -> Self {
         match self {
-            Coordinate::North => Coordinate::South,
-            Coordinate::South => Coordinate::North,
-            Coordinate::East => Coordinate::West,
-            Coordinate::West => Coordinate::East,
+            Self::North => Self::South,
+            Self::South => Self::North,
+            Self::East => Self::West,
+            Self::West => Self::East,
         }
     }
 
     fn move_position(self, (x, y): Position) -> Option<Position> {
         Some(match self {
-            Coordinate::North => (x, y.checked_sub(1)?),
-            Coordinate::South => (x, y.checked_add(1)?),
-            Coordinate::East => (x.checked_add(1)?, y),
-            Coordinate::West => (x.checked_sub(1)?, y),
+            Self::North => (x, y.checked_sub(1)?),
+            Self::South => (x, y.checked_add(1)?),
+            Self::East => (x.checked_add(1)?, y),
+            Self::West => (x.checked_sub(1)?, y),
         })
     }
 }
@@ -46,12 +46,12 @@ impl Pipe {
     #[must_use]
     pub const fn openings(self) -> [Coordinate; 2] {
         match self {
-            Pipe::Vertical => [Coordinate::North, Coordinate::South],
-            Pipe::Horizontal => [Coordinate::East, Coordinate::West],
-            Pipe::BendNE => [Coordinate::North, Coordinate::East],
-            Pipe::BendNW => [Coordinate::North, Coordinate::West],
-            Pipe::BendSE => [Coordinate::South, Coordinate::East],
-            Pipe::BendSW => [Coordinate::South, Coordinate::West],
+            Self::Vertical => [Coordinate::North, Coordinate::South],
+            Self::Horizontal => [Coordinate::East, Coordinate::West],
+            Self::BendNE => [Coordinate::North, Coordinate::East],
+            Self::BendNW => [Coordinate::North, Coordinate::West],
+            Self::BendSE => [Coordinate::South, Coordinate::East],
+            Self::BendSW => [Coordinate::South, Coordinate::West],
         }
     }
 
@@ -72,22 +72,22 @@ impl TryFrom<(Coordinate, Coordinate)> for Pipe {
     fn try_from(value: (Coordinate, Coordinate)) -> Result<Self> {
         match value {
             (Coordinate::North, Coordinate::South) | (Coordinate::South, Coordinate::North) => {
-                Ok(Pipe::Vertical)
+                Ok(Self::Vertical)
             }
             (Coordinate::East, Coordinate::West) | (Coordinate::West, Coordinate::East) => {
-                Ok(Pipe::Horizontal)
+                Ok(Self::Horizontal)
             }
             (Coordinate::North, Coordinate::East) | (Coordinate::East, Coordinate::North) => {
-                Ok(Pipe::BendNE)
+                Ok(Self::BendNE)
             }
             (Coordinate::North, Coordinate::West) | (Coordinate::West, Coordinate::North) => {
-                Ok(Pipe::BendNW)
+                Ok(Self::BendNW)
             }
             (Coordinate::South, Coordinate::East) | (Coordinate::East, Coordinate::South) => {
-                Ok(Pipe::BendSE)
+                Ok(Self::BendSE)
             }
             (Coordinate::South, Coordinate::West) | (Coordinate::West, Coordinate::South) => {
-                Ok(Pipe::BendSW)
+                Ok(Self::BendSW)
             }
             _ => bail!("Repeated coordinates are invalid"),
         }
@@ -105,12 +105,12 @@ impl TryFrom<char> for Pipe {
 
     fn try_from(value: char) -> Result<Self, InvalidPipe> {
         match value {
-            '|' => Ok(Pipe::Vertical),
-            '-' => Ok(Pipe::Horizontal),
-            'L' => Ok(Pipe::BendNE),
-            'J' => Ok(Pipe::BendNW),
-            '7' => Ok(Pipe::BendSW),
-            'F' => Ok(Pipe::BendSE),
+            '|' => Ok(Self::Vertical),
+            '-' => Ok(Self::Horizontal),
+            'L' => Ok(Self::BendNE),
+            'J' => Ok(Self::BendNW),
+            '7' => Ok(Self::BendSW),
+            'F' => Ok(Self::BendSE),
             'S' => Err(InvalidPipe::Start),
             '.' => Err(InvalidPipe::None),
             _ => Err(InvalidPipe::Error),
@@ -121,12 +121,12 @@ impl TryFrom<char> for Pipe {
 impl Display for Pipe {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Pipe::Vertical => f.write_char('|'),
-            Pipe::Horizontal => f.write_char('-'),
-            Pipe::BendNE => f.write_char('L'),
-            Pipe::BendNW => f.write_char('J'),
-            Pipe::BendSE => f.write_char('F'),
-            Pipe::BendSW => f.write_char('7'),
+            Self::Vertical => f.write_char('|'),
+            Self::Horizontal => f.write_char('-'),
+            Self::BendNE => f.write_char('L'),
+            Self::BendNW => f.write_char('J'),
+            Self::BendSE => f.write_char('F'),
+            Self::BendSW => f.write_char('7'),
         }
     }
 }
@@ -146,7 +146,7 @@ impl TryFrom<Vec<Vec<Option<Pipe>>>> for Pipes {
         let height = matrix.len();
         let length = matrix.first().context("Must not be empty")?.len();
 
-        Ok(Pipes {
+        Ok(Self {
             matrix,
             length,
             height,

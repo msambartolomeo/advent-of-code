@@ -31,6 +31,8 @@ fn process(input: &str) -> Result<u64> {
         .map(|range| range[0]..range[0] + range[1])
         .collect::<Vec<Range<u64>>>();
 
+    // NOTE: Redundant clone allowed for more performance with rayon
+    #[allow(clippy::redundant_clone)]
     let result = ranges
         .into_par_iter()
         .flat_map(|range| range.clone())

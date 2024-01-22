@@ -13,8 +13,8 @@ pub enum Pulse {
 impl Display for Pulse {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Pulse::Low => f.write_str("low"),
-            Pulse::High => f.write_str("high"),
+            Self::Low => f.write_str("low"),
+            Self::High => f.write_str("high"),
         }
     }
 }

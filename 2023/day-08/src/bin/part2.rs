@@ -14,13 +14,9 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u64> {
     let (directions, network) = day_08::parser::parse_maps(input)?;
 
-    let starting_nodes = network
+    let result = network
         .keys()
         .filter(|s| s.ends_with('A'))
-        .collect::<Vec<_>>();
-
-    let result = starting_nodes
-        .into_iter()
         .map(|n| day_08::get_steps_to_end(&directions, &network, n, |s| s.ends_with('Z')))
         .reduce(num::integer::lcm)
         .context("There should be at least 1 starting node")?;

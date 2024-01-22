@@ -16,10 +16,10 @@ impl FromStr for Direction {
 
     fn from_str(s: &str) -> Result<Self> {
         match s {
-            "U" | "3" => Ok(Direction::Up),
-            "D" | "1" => Ok(Direction::Down),
-            "L" | "2" => Ok(Direction::Left),
-            "R" | "0" => Ok(Direction::Right),
+            "U" | "3" => Ok(Self::Up),
+            "D" | "1" => Ok(Self::Down),
+            "L" | "2" => Ok(Self::Left),
+            "R" | "0" => Ok(Self::Right),
             _ => bail!("Invalid direction"),
         }
     }
@@ -49,7 +49,7 @@ impl FromStr for RGB {
         );
         let direction = direction.parse()?;
 
-        Ok(RGB { meters, direction })
+        Ok(Self { meters, direction })
     }
 }
 
@@ -68,14 +68,14 @@ pub struct Position {
 
 impl From<(i64, i64)> for Position {
     fn from((x, y): (i64, i64)) -> Self {
-        Position { x, y }
+        Self { x, y }
     }
 }
 
 impl Position {
     #[allow(clippy::cast_possible_wrap)]
     #[must_use]
-    pub fn get_next(&self, direction: Direction, meters: u64) -> Self {
+    pub const fn get_next(&self, direction: Direction, meters: u64) -> Self {
         let mut position = *self;
         let meters = meters as i64;
 
@@ -99,7 +99,7 @@ pub struct ShoeLacePick {
 
 impl ShoeLacePick {
     #[must_use]
-    pub fn last_vertex(&self) -> Position {
+    pub const fn last_vertex(&self) -> Position {
         self.last_vertex
     }
 
@@ -113,7 +113,7 @@ impl ShoeLacePick {
     }
 
     #[must_use]
-    pub fn finish(self) -> u64 {
+    pub const fn finish(self) -> u64 {
         let area = (self.value / 2).unsigned_abs();
 
         let internal = area + 1 - self.border_count / 2;

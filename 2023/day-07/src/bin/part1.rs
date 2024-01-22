@@ -57,19 +57,19 @@ pub enum CamelHandType {
 impl Card for CamelCard {
     fn from_char(c: char) -> Result<Self> {
         Ok(match c {
-            '2' => CamelCard::C2,
-            '3' => CamelCard::C3,
-            '4' => CamelCard::C4,
-            '5' => CamelCard::C5,
-            '6' => CamelCard::C6,
-            '7' => CamelCard::C7,
-            '8' => CamelCard::C8,
-            '9' => CamelCard::C9,
-            'T' => CamelCard::T,
-            'J' => CamelCard::J,
-            'Q' => CamelCard::Q,
-            'K' => CamelCard::K,
-            'A' => CamelCard::A,
+            '2' => Self::C2,
+            '3' => Self::C3,
+            '4' => Self::C4,
+            '5' => Self::C5,
+            '6' => Self::C6,
+            '7' => Self::C7,
+            '8' => Self::C8,
+            '9' => Self::C9,
+            'T' => Self::T,
+            'J' => Self::J,
+            'Q' => Self::Q,
+            'K' => Self::K,
+            'A' => Self::A,
             _ => bail!("Character is not a card"),
         })
     }
@@ -81,13 +81,13 @@ impl HandType<CamelCard> for CamelHandType {
         let counts = counts.values().sorted().collect_vec();
 
         match counts[..] {
-            [5] => CamelHandType::FiveOfAKind,
-            [1, 4] => CamelHandType::FourOfAKind,
-            [2, 3] => CamelHandType::FullHouse,
-            [1, 1, 3] => CamelHandType::ThreeOfAKind,
-            [1, 2, 2] => CamelHandType::TwoPair,
-            [1, 1, 1, 2] => CamelHandType::OnePair,
-            [1, 1, 1, 1, 1] => CamelHandType::HighCard,
+            [5] => Self::FiveOfAKind,
+            [1, 4] => Self::FourOfAKind,
+            [2, 3] => Self::FullHouse,
+            [1, 1, 3] => Self::ThreeOfAKind,
+            [1, 2, 2] => Self::TwoPair,
+            [1, 1, 1, 2] => Self::OnePair,
+            [1, 1, 1, 1, 1] => Self::HighCard,
             _ => unreachable!("Unexpected array {counts:?}"),
         }
     }

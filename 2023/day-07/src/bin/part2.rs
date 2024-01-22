@@ -57,19 +57,19 @@ pub enum CamelHandTypeJoker {
 impl Card for CamelCardJoker {
     fn from_char(c: char) -> Result<Self> {
         Ok(match c {
-            '2' => CamelCardJoker::C2,
-            '3' => CamelCardJoker::C3,
-            '4' => CamelCardJoker::C4,
-            '5' => CamelCardJoker::C5,
-            '6' => CamelCardJoker::C6,
-            '7' => CamelCardJoker::C7,
-            '8' => CamelCardJoker::C8,
-            '9' => CamelCardJoker::C9,
-            'T' => CamelCardJoker::T,
-            'J' => CamelCardJoker::J,
-            'Q' => CamelCardJoker::Q,
-            'K' => CamelCardJoker::K,
-            'A' => CamelCardJoker::A,
+            '2' => Self::C2,
+            '3' => Self::C3,
+            '4' => Self::C4,
+            '5' => Self::C5,
+            '6' => Self::C6,
+            '7' => Self::C7,
+            '8' => Self::C8,
+            '9' => Self::C9,
+            'T' => Self::T,
+            'J' => Self::J,
+            'Q' => Self::Q,
+            'K' => Self::K,
+            'A' => Self::A,
             _ => bail!("Character is not a card"),
         })
     }
@@ -89,13 +89,13 @@ impl HandType<CamelCardJoker> for CamelHandTypeJoker {
         }
 
         match counts[..] {
-            [5] => CamelHandTypeJoker::FiveOfAKind,
-            [4, 1] => CamelHandTypeJoker::FourOfAKind,
-            [3, 2] => CamelHandTypeJoker::FullHouse,
-            [3, 1, 1] => CamelHandTypeJoker::ThreeOfAKind,
-            [2, 2, 1] => CamelHandTypeJoker::TwoPair,
-            [2, 1, 1, 1] => CamelHandTypeJoker::OnePair,
-            [1, 1, 1, 1, 1] => CamelHandTypeJoker::HighCard,
+            [5] => Self::FiveOfAKind,
+            [4, 1] => Self::FourOfAKind,
+            [3, 2] => Self::FullHouse,
+            [3, 1, 1] => Self::ThreeOfAKind,
+            [2, 2, 1] => Self::TwoPair,
+            [2, 1, 1, 1] => Self::OnePair,
+            [1, 1, 1, 1, 1] => Self::HighCard,
             _ => unreachable!("Unexpected array {counts:?}"),
         }
     }

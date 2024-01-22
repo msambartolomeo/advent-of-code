@@ -15,8 +15,8 @@ impl TryFrom<char> for Rock {
 
     fn try_from(value: char) -> Result<Self> {
         match value {
-            'O' => Ok(Rock::Rounded),
-            '#' => Ok(Rock::Cube),
+            'O' => Ok(Self::Rounded),
+            '#' => Ok(Self::Cube),
             _ => bail!("Invalid rock"),
         }
     }
@@ -25,8 +25,8 @@ impl TryFrom<char> for Rock {
 impl Display for Rock {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Rock::Rounded => f.write_char('O'),
-            Rock::Cube => f.write_char('#'),
+            Self::Rounded => f.write_char('O'),
+            Self::Cube => f.write_char('#'),
         }
     }
 }

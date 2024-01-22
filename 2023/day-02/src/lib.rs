@@ -18,19 +18,14 @@ impl Deref for CubeConundrum {
 
 impl CubeConundrum {
     #[must_use]
-    pub fn get_id(&self) -> u32 {
+    pub const fn get_id(&self) -> u32 {
         self.0
     }
 
     #[must_use]
     pub fn minimum_bag(&self) -> Bag {
-        let mut min = Bag::default();
-
-        for bag in self.iter() {
-            min.max_mut(bag);
-        }
-
-        min
+        self.iter()
+            .fold(Bag::default(), |bag, other| bag.maximum(other))
     }
 }
 
@@ -45,28 +40,31 @@ pub struct Bag {
 
 impl Bag {
     #[must_use]
-    pub fn new(red: u32, green: u32, blue: u32) -> Self {
+    pub const fn new(red: u32, green: u32, blue: u32) -> Self {
         Self { red, green, blue }
     }
 
     #[must_use]
-    pub fn is_contained(&self, other: &Self) -> bool {
+    pub const fn is_contained(&self, other: &Self) -> bool {
         self.red <= other.red && self.green <= other.green && self.blue <= other.blue
     }
 
-    pub fn max_mut(&mut self, other: &Self) {
-        self.red = self.red.max(other.red);
-        self.green = self.green.max(other.green);
-        self.blue = self.blue.max(other.blue);
+    #[must_use]
+    pub fn maximum(&self, other: &Self) -> Self {
+        Self {
+            red: self.red.max(other.red),
+            green: self.green.max(other.green),
+            blue: self.blue.max(other.blue),
+        }
     }
 
     #[must_use]
-    pub fn power(&self) -> u32 {
+    pub const fn power(&self) -> u32 {
         self.red * self.green * self.blue
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Color {
     Red,
     Green,
@@ -188,14 +186,14 @@ mod tests {
 
     #[test]
     fn test_min_bag() {
-        let mut b1 = Bag::new(6, 3, 1);
+        let b1 = Bag::new(6, 3, 1);
         let b2 = Bag::new(1, 2, 2);
 
-        b1.max_mut(&b2);
+        let result = b1.maximum(&b2);
 
         let expected = Bag::new(6, 3, 2);
 
-        assert_eq!(expected, b1);
+        assert_eq!(expected, result);
     }
 
     #[test]

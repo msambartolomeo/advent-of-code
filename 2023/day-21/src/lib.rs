@@ -22,8 +22,8 @@ impl From<(i64, i64)> for Position {
 }
 
 impl Position {
-    pub fn next(self) -> impl Iterator<Item = Position> {
-        let Position { x, y } = self;
+    pub fn next(self) -> impl Iterator<Item = Self> {
+        let Self { x, y } = self;
 
         [
             (x + 1, y).into(),
@@ -46,8 +46,8 @@ pub struct Garden {
 
 impl Garden {
     #[must_use]
-    pub fn new(matrix: Vec<Feature>, height: usize, length: usize, start: Position) -> Self {
-        Garden {
+    pub const fn new(matrix: Vec<Feature>, height: usize, length: usize, start: Position) -> Self {
+        Self {
             height,
             length,
             matrix,
@@ -58,7 +58,7 @@ impl Garden {
 
     #[inline]
     #[must_use]
-    pub fn start(&self) -> Position {
+    pub const fn start(&self) -> Position {
         self.start
     }
 

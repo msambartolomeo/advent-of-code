@@ -3,13 +3,13 @@ use itertools::Itertools;
 
 #[derive(Debug)]
 pub struct BoatRace {
-    pub allowed_time: u64,
-    pub best_distance: u64,
+    pub allowed_time: u32,
+    pub best_distance: u32,
 }
 
-impl From<(u64, u64)> for BoatRace {
-    fn from((allowed_time, best_distance): (u64, u64)) -> Self {
-        BoatRace {
+impl From<(u32, u32)> for BoatRace {
+    fn from((allowed_time, best_distance): (u32, u32)) -> Self {
+        Self {
             allowed_time,
             best_distance,
         }
@@ -18,7 +18,7 @@ impl From<(u64, u64)> for BoatRace {
 
 impl BoatRace {
     #[must_use]
-    pub fn new(allowed_time: u64, best_distance: u64) -> Self {
+    pub const fn new(allowed_time: u32, best_distance: u32) -> Self {
         Self {
             allowed_time,
             best_distance,
@@ -29,11 +29,13 @@ impl BoatRace {
     ///
     /// Returns error if the equation cannot be solved for real numbers
     pub fn solve_equation(&self) -> Result<u64> {
-        let time = self.allowed_time as f64;
-        let distance = self.best_distance as f64;
+        let time = f64::from(self.allowed_time);
+        let distance = f64::from(self.best_distance);
 
         let (start, end) = quadratic_formula(1f64, -time, distance)?;
 
+        #[allow(clippy::cast_possible_truncation)]
+        #[allow(clippy::cast_sign_loss)]
         let (start, end) = (start.floor() as u64, end.ceil() as u64);
 
         Ok(end - 1 - start)
@@ -46,7 +48,7 @@ fn quadratic_formula(a: f64, b: f64, c: f64) -> Result<(f64, f64)> {
     // NOTE: a must not be 0
     ensure!(a > f64::EPSILON);
 
-    let discriminant = b * b - 4f64 * a * c;
+    let discriminant = b.mul_add(b, -4f64 * a * c);
 
     // NOTE: discriminant must be positive
     ensure!(discriminant >= 0f64);
@@ -91,8 +93,8 @@ pub fn parse_long_boat_race(input: &str) -> Result<BoatRace> {
 fn parse_times_and_distances(
     input: &str,
 ) -> Result<(
-    impl Iterator<Item = Result<u64>> + '_,
-    impl Iterator<Item = Result<u64>> + '_,
+    impl Iterator<Item = Result<u32>> + '_,
+    impl Iterator<Item = Result<u32>> + '_,
 )> {
     let (times, distances) = input
         .split_once('\n')
@@ -108,12 +110,12 @@ fn parse_times_and_distances(
 fn parse_line<'a>(
     input: &'a str,
     expected_tag: &str,
-) -> Result<impl Iterator<Item = Result<u64>> + 'a> {
+) -> Result<impl Iterator<Item = Result<u32>> + 'a> {
     let (tag, values) = input
         .split_once(':')
         .context("each line must have a : separating tag and content")?;
 
     ensure!(tag == expected_tag);
 
-    Ok(values.split_whitespace().map(|n| Ok(n.parse::<u64>()?)))
+    Ok(values.split_whitespace().map(|n| Ok(n.parse()?)))
 }

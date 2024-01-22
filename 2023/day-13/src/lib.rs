@@ -11,8 +11,8 @@ impl TryFrom<char> for Element {
 
     fn try_from(value: char) -> Result<Self> {
         match value {
-            '.' => Ok(Element::Ash),
-            '#' => Ok(Element::Rock),
+            '.' => Ok(Self::Ash),
+            '#' => Ok(Self::Rock),
 
             _ => bail!("Invalid character for environment element"),
         }
@@ -44,12 +44,12 @@ impl Mirror {
     }
 
     #[must_use]
-    pub fn rows(&self) -> MirrorAccessor {
+    pub const fn rows(&self) -> MirrorAccessor {
         MirrorAccessor::Rows(self)
     }
 
     #[must_use]
-    pub fn columns(&self) -> MirrorAccessor {
+    pub const fn columns(&self) -> MirrorAccessor {
         MirrorAccessor::Columns(self)
     }
 }
@@ -61,7 +61,7 @@ pub enum MirrorAccessor<'a> {
 
 impl<'a> MirrorAccessor<'a> {
     #[must_use]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         match self {
             MirrorAccessor::Rows(m) => m.rows,
             MirrorAccessor::Columns(m) => m.columns,
@@ -69,7 +69,7 @@ impl<'a> MirrorAccessor<'a> {
     }
 
     #[must_use]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len() == 0
     }
 

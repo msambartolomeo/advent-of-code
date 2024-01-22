@@ -29,7 +29,7 @@ fn process(input: &str) -> Result<u32> {
                 .for_each(|q| *q += current_count);
 
             if len <= winning_count {
-                card_counts.extend(std::iter::repeat(1 + current_count).take(winning_count - len))
+                card_counts.extend(std::iter::repeat(1 + current_count).take(winning_count - len));
             }
 
             (acc + current_count, card_counts)

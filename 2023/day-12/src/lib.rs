@@ -14,9 +14,9 @@ impl TryFrom<char> for Spring {
 
     fn try_from(c: char) -> Result<Self> {
         match c {
-            '.' => Ok(Spring::Operational),
-            '#' => Ok(Spring::Damaged),
-            '?' => Ok(Spring::Unknown),
+            '.' => Ok(Self::Operational),
+            '#' => Ok(Self::Damaged),
+            '?' => Ok(Self::Unknown),
             _ => bail!("{c} is an invalid spring"),
         }
     }
@@ -53,9 +53,7 @@ fn unknown_spring_posibilities_rec<'a>(
 ) -> u64 {
     let cache_data = (springs, damaged_groups, damaged_count);
 
-    let result = if let Some(result) = cache.get(&cache_data) {
-        *result
-    } else {
+    cache.get(&cache_data).copied().unwrap_or_else(|| {
         let (springs, damaged_groups, damaged_count) = cache_data;
         let result = match springs.split_first() {
             Some((Spring::Operational, springs)) => {
@@ -110,9 +108,7 @@ fn unknown_spring_posibilities_rec<'a>(
 
         cache.insert((springs, damaged_groups, damaged_count), result);
         result
-    };
-
-    result
+    })
 }
 
 /// Calls the parse function for each spring record

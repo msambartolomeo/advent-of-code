@@ -1,4 +1,4 @@
-use std::ops::Deref;
+use std::{fmt::Display, ops::Deref};
 
 #[derive(Debug)]
 pub struct CalibrationDocument<'a>(Vec<TaintedCalibrationValue<'a>>);
@@ -26,6 +26,12 @@ impl<'a> Deref for TaintedCalibrationValue<'a> {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl<'a> Display for TaintedCalibrationValue<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.0)
     }
 }
 
@@ -65,17 +71,9 @@ impl<'a> Iterator for NumberIterator<'a> {
             }
         }
 
-        if let Some(n) = self.0.chars().next()?.to_digit(10) {
-            self.0 = &self.0[1..];
-            return Some(n);
-        }
-
-        if self.0.is_empty() {
-            self.0 = &self.0[1..];
-            return self.next();
-        }
-
-        None
+        let next = self.0.chars().next()?;
+        self.0 = &self.0[1..];
+        next.to_digit(10).map_or_else(|| self.next(), Some)
     }
 }
 
