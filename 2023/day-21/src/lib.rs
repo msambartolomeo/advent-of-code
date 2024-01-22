@@ -11,12 +11,12 @@ pub enum Feature {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Position {
-    x: usize,
-    y: usize,
+    x: i64,
+    y: i64,
 }
 
-impl From<(usize, usize)> for Position {
-    fn from((x, y): (usize, usize)) -> Self {
+impl From<(i64, i64)> for Position {
+    fn from((x, y): (i64, i64)) -> Self {
         Self { x, y }
     }
 }
@@ -41,6 +41,7 @@ pub struct Garden {
     length: usize,
     matrix: Vec<Feature>,
     start: Position,
+    infinite: bool,
 }
 
 impl Garden {
@@ -51,6 +52,7 @@ impl Garden {
             length,
             matrix,
             start,
+            infinite: false,
         }
     }
 
@@ -63,7 +65,21 @@ impl Garden {
     #[must_use]
     pub fn get(&self, position: Position) -> Option<Feature> {
         let Position { x, y } = position;
-        (x < self.length && y < self.height).then_some(self.matrix[y * self.height + x])
+
+        let (x, y) = if self.infinite {
+            (
+                usize::try_from(x.rem_euclid(i64::try_from(self.length).ok()?)).ok()?,
+                usize::try_from(y.rem_euclid(i64::try_from(self.height).ok()?)).ok()?,
+            )
+        } else {
+            (usize::try_from(x).ok()?, usize::try_from(y).ok()?)
+        };
+
+        (x < self.length && y < self.height).then(|| self.matrix[y * self.height + x])
+    }
+
+    pub fn make_infinite(&mut self) {
+        self.infinite = true;
     }
 }
 
@@ -162,7 +178,7 @@ pub fn parse_garden(input: &str) -> Result<Garden> {
                     '#' => Ok(Feature::Rock),
                     '.' => Ok(Feature::Plot),
                     'S' => {
-                        start = Some(Position::from((x, y)));
+                        start = Some(Position::from((i64::try_from(x)?, i64::try_from(y)?)));
                         Ok(Feature::Plot)
                     }
 
