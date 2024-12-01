@@ -11,12 +11,13 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(input: &str) -> Result<u64> {
+fn process(_input: &str) -> Result<u64> {
     todo!()
 }
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused)]
     use super::*;
 
     #[test]

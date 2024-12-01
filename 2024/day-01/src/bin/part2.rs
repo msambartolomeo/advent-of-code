@@ -12,11 +12,14 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u64> {
+    let _input = day_01::parser::parse(input)?;
+
     todo!()
 }
 
 #[cfg(test)]
 mod tests {
+    #![allow(unused)]
     use super::*;
 
     #[test]

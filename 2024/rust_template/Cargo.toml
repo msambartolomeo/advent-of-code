@@ -9,6 +9,8 @@ edition = "2021"
 pedantic = "deny"
 nursery = "deny"
 unwrap_used = "deny"
+missing_panics_doc = "allow"
+missing_errors_doc = "allow"
 
 [dependencies]
 anyhow = "1.0.93"
