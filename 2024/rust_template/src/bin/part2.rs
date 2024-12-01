@@ -20,12 +20,14 @@ mod tests {
     #![allow(unused)]
     use super::*;
 
+    const INPUT: &str = "
+";
+
     #[test]
     fn test_example() -> Result<()> {
         let expected: u64 = todo!();
-        let input = todo!();
 
-        let result = process(input)?;
+        let result = process(INPUT)?;
 
         assert_eq!(expected, result);
 
