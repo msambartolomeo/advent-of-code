@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use anyhow::Result;
 use itertools::Itertools;
 
@@ -18,30 +16,10 @@ fn process(input: &str) -> Result<u64> {
     let reports = day_02::parser::parse(input);
 
     let result = reports
-        .filter_ok(|v| is_safe(v))
+        .filter_ok(|v| day_02::is_safe(v, 0))
         .process_results(|it| it.count())? as u64;
 
     Ok(result)
-}
-
-fn is_safe(v: &[u64]) -> bool {
-    let first = v[0];
-
-    v.iter()
-        .skip(1)
-        .try_fold((first, Ordering::Equal), |(last, ordering), &next| {
-            let new_ord = next.cmp(&last);
-            let diff = last.abs_diff(next);
-
-            if diff == 0 || diff > 3 {
-                Err(())
-            } else if matches!(ordering, Ordering::Equal) || new_ord == ordering {
-                Ok((next, new_ord))
-            } else {
-                Err(())
-            }
-        })
-        .is_ok()
 }
 
 #[cfg(test)]
