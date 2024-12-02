@@ -39,23 +39,18 @@ fn dampener(
 ) -> bool {
     if dampening > 0 {
         if current_idx == 0 {
-            // If idx is 0 then restart ordering
-            let ignore_first = is_safe_rec(1, 2, v, dampening - 1, Ordering::Equal);
-            let ignore_next = is_safe_rec(0, 2, v, dampening - 1, Ordering::Equal);
-
-            ignore_first || ignore_next
+            // Ignore first -> Ignore second
+            is_safe_rec(1, 2, v, dampening - 1, Ordering::Equal)
+                || is_safe_rec(0, 2, v, dampening - 1, Ordering::Equal)
         } else if current_idx == 1 {
-            // If ignoring prev or current restart ordering
-            let ignore_prev = is_safe_rec(1, 2, v, dampening - 1, Ordering::Equal);
-            let ignore_current = is_safe_rec(0, 2, v, dampening - 1, Ordering::Equal);
-            let ignore_next = is_safe_rec(1, 3, v, dampening - 1, ordering);
-
-            ignore_prev || ignore_current || ignore_next
+            // Ignore prev -> Ignore current -> Ignore next
+            is_safe_rec(1, 2, v, dampening - 1, Ordering::Equal)
+                || is_safe_rec(0, 2, v, dampening - 1, Ordering::Equal)
+                || is_safe_rec(1, 3, v, dampening - 1, ordering)
         } else {
-            let ignore_current = is_safe_rec(current_idx - 1, next_idx, v, dampening - 1, ordering);
-            let ignore_next = is_safe_rec(current_idx, next_idx + 1, v, dampening - 1, ordering);
-
-            ignore_current || ignore_next
+            // Ignore current -> Ignore next
+            is_safe_rec(current_idx - 1, next_idx, v, dampening - 1, ordering)
+                || is_safe_rec(current_idx, next_idx + 1, v, dampening - 1, ordering)
         }
     } else {
         false
