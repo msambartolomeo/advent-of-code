@@ -4,12 +4,8 @@ use regex::Regex;
 use crate::Instruction;
 
 pub fn parse(input: &str) -> Result<Vec<Instruction>> {
-    let regex = Box::leak(Box::new(
-        Regex::new(r"don\'t\(\)()()|do\(\)()()|mul\((\d{1,3}),(\d{1,3})\)")
-            .expect("Should be valid regex"),
-    ));
-
-    regex
+    Regex::new(r"don't\(\)()()|do\(\)()()|mul\((\d{1,3}),(\d{1,3})\)")
+        .expect("Should be valid regex")
         .captures_iter(input)
         .map(|c| c.extract())
         .map(|(s, [n1, n2])| match s {
