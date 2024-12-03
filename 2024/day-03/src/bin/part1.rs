@@ -1,4 +1,5 @@
 use anyhow::Result;
+use itertools::Itertools;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -11,8 +12,12 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(_input: &str) -> Result<u64> {
-    todo!()
+fn process(input: &str) -> Result<u64> {
+    let muls = day_03::parser::parse(input);
+
+    let result = muls.map_ok(|(n1, n2)| n1 * n2).sum();
+
+    result
 }
 
 #[cfg(test)]
