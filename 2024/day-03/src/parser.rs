@@ -1,13 +1,21 @@
 use anyhow::Result;
 use regex::Regex;
 
-pub fn parse(input: &str) -> impl Iterator<Item = Result<(u64, u64)>> + '_ {
+use crate::Instruction;
+
+pub fn parse(input: &str) -> Result<Vec<Instruction>> {
     let regex = Box::leak(Box::new(
-        Regex::new(r"mul\((\d{1,3}),(\d{1,3})\)").expect("Should be valid regex"),
+        Regex::new(r"don\'t\(\)()()|do\(\)()()|mul\((\d{1,3}),(\d{1,3})\)")
+            .expect("Should be valid regex"),
     ));
 
     regex
         .captures_iter(input)
         .map(|c| c.extract())
-        .map(|(_, [n1, n2])| Ok((n1.parse()?, n2.parse()?)))
+        .map(|(s, [n1, n2])| match s {
+            "don't()" => Ok(Instruction::Dont),
+            "do()" => Ok(Instruction::Do),
+            _ => Ok(Instruction::Mul(n1.parse()?, n2.parse()?)),
+        })
+        .collect()
 }
