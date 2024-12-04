@@ -29,7 +29,7 @@ impl TryFrom<char> for Letter {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct I(isize, isize);
+pub struct I(pub isize, pub isize);
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct U(pub usize, pub usize);
 
@@ -56,19 +56,6 @@ impl Add<I> for U {
     }
 }
 
-const SEARCH_OPTIONS: [[I; 3]; 8] = [
-    [I(0, 1), I(0, 2), I(0, 3)],
-    [I(0, -1), I(0, -2), I(0, -3)],
-    [I(1, 0), I(2, 0), I(3, 0)],
-    [I(-1, 0), I(-2, 0), I(-3, 0)],
-    [I(1, 1), I(2, 2), I(3, 3)],
-    [I(-1, -1), I(-2, -2), I(-3, -3)],
-    [I(1, -1), I(2, -2), I(3, -3)],
-    [I(-1, 1), I(-2, 2), I(-3, 3)],
-];
-
-const XMAS: [Letter; 4] = [Letter::X, Letter::M, Letter::A, Letter::S];
-
 impl WordSearch {
     #[must_use]
     pub fn size(&self) -> U {
@@ -81,18 +68,23 @@ impl WordSearch {
     }
 
     #[must_use]
-    pub fn search_xmas(&self, index: U) -> u64 {
-        if self.get(index) != Some(XMAS[0]) {
+    pub fn search<R>(&self, index: U, pattern: &[Letter], options: &[R]) -> u64
+    where
+        R: AsRef<[I]>,
+    {
+        if self.get(index) != Some(pattern[0]) {
             return 0;
         }
 
-        SEARCH_OPTIONS
-            .into_iter()
+        options
+            .iter()
             .map(|o| {
-                o.into_iter()
+                o.as_ref()
+                    .iter()
+                    .copied()
                     .map(|i| index + i)
                     .map(|i| self.get(i?))
-                    .zip(XMAS.into_iter().skip(1))
+                    .zip(pattern.iter().copied().skip(1))
                     .all(|(l1, l2)| l1.is_some_and(|l| l == l2))
             })
             .map(u64::from)

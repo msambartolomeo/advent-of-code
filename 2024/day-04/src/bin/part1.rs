@@ -1,5 +1,5 @@
 use anyhow::Result;
-use day_04::U;
+use day_04::{Letter, I, U};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -11,6 +11,19 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+const XMAS_SEARCH_OPTIONS: [[I; 3]; 8] = [
+    [I(0, 1), I(0, 2), I(0, 3)],
+    [I(0, -1), I(0, -2), I(0, -3)],
+    [I(1, 0), I(2, 0), I(3, 0)],
+    [I(-1, 0), I(-2, 0), I(-3, 0)],
+    [I(1, 1), I(2, 2), I(3, 3)],
+    [I(-1, -1), I(-2, -2), I(-3, -3)],
+    [I(1, -1), I(2, -2), I(3, -3)],
+    [I(-1, 1), I(-2, 2), I(-3, 3)],
+];
+
+const XMAS: [Letter; 4] = [Letter::X, Letter::M, Letter::A, Letter::S];
+
 #[inline]
 fn process(input: &str) -> Result<u64> {
     let word_search = day_04::parser::parse(input)?;
@@ -21,7 +34,7 @@ fn process(input: &str) -> Result<u64> {
 
     for i in 0..x {
         for j in 0..y {
-            result += word_search.search_xmas(U(i, j));
+            result += word_search.search(U(i, j), &XMAS, &XMAS_SEARCH_OPTIONS);
         }
     }
 
