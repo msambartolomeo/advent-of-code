@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use anyhow::Result;
 
 fn main() -> Result<()> {
@@ -11,8 +13,32 @@ fn main() -> Result<()> {
 }
 
 #[inline]
-fn process(_input: &str) -> Result<u64> {
-    todo!()
+fn process(input: &str) -> Result<u64> {
+    let (rules, updates) = day_05::parser::parse(input)?;
+
+    let result = updates
+        .into_iter()
+        .filter_map(|v| {
+            let mut next = v.split_first();
+            let empty = HashSet::new();
+
+            while let Some((current, left)) = next {
+                let set = rules.get(current).unwrap_or(&empty);
+
+                for m in left {
+                    if !set.contains(m) {
+                        return None;
+                    }
+                }
+
+                next = left.split_first();
+            }
+
+            Some(v[v.len() / 2])
+        })
+        .sum();
+
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -53,7 +79,7 @@ mod tests {
 
     #[test]
     fn test_example() -> Result<()> {
-        let expected: u64 = todo!();
+        let expected: u64 = 143;
 
         let result = process(INPUT)?;
 
