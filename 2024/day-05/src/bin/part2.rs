@@ -26,17 +26,17 @@ fn process(input: &str) -> Result<u64> {
             while let Some((current, left)) = next {
                 let set = rules.get(current).unwrap_or(&empty);
 
-                let mut repeat = false;
+                let mut swapped = false;
 
-                for (i, m) in left.to_vec().iter().enumerate() {
-                    if !set.contains(m) {
+                for n in &mut *left {
+                    if !set.contains(n) {
                         keep = true;
-                        repeat = true;
-                        std::mem::swap(&mut *current, &mut left[i]);
+                        swapped = true;
+                        std::mem::swap(current, n);
                     }
                 }
 
-                if repeat {
+                if swapped {
                     next = Some((current, left));
                 } else {
                     next = left.split_first_mut();
