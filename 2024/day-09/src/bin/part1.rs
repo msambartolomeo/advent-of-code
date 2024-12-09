@@ -18,20 +18,21 @@ fn process(input: &str) -> Result<u64> {
 
     let mut fragments = fs.into_iter().flat_map(|ds| ds.fragments()).collect_vec();
 
-    let mut j = fragments.len();
+    let mut empty_idx = 0;
 
-    for i in 0..fragments.len() {
-        if matches!(fragments[i], BlockKind::Empty) {
-            if let Some(last) = last_block(&fragments, j) {
-                j = last;
-            } else {
-                break;
-            }
-            if j < i {
-                break;
-            }
+    for block_idx in (0..fragments.len()).rev() {
+        if matches!(fragments[block_idx], BlockKind::Empty) {
+            continue;
+        }
 
-            fragments.swap(i, j);
+        if let Some(i) = fragments[empty_idx..block_idx]
+            .iter()
+            .position(|bk| matches!(bk, BlockKind::Empty))
+        {
+            empty_idx += i;
+            fragments.swap(empty_idx, block_idx);
+        } else {
+            break;
         }
     }
 
@@ -42,15 +43,6 @@ fn process(input: &str) -> Result<u64> {
         .sum();
 
     Ok(result)
-}
-
-fn last_block(v: &[BlockKind], start_from: usize) -> Option<usize> {
-    v.iter()
-        .enumerate()
-        .rev()
-        .skip(v.len() - start_from)
-        .find(|(_, bk)| matches!(bk, BlockKind::File(_)))
-        .map(|(i, _)| i)
 }
 
 #[cfg(test)]

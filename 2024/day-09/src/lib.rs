@@ -13,6 +13,7 @@ pub enum BlockKind {
 }
 
 impl DiskItem {
+    #[must_use]
     pub const fn empty(len: usize) -> Self {
         Self {
             kind: BlockKind::Empty,
@@ -39,11 +40,12 @@ impl DiskItem {
         std::iter::repeat(self.kind).take(self.len)
     }
 
-    pub fn partition(self, len: usize) -> (Self, Option<Self>) {
+    #[must_use]
+    pub const fn partition(self, len: usize) -> (Self, Option<Self>) {
         if self.len <= len {
             (self, None)
         } else {
-            (DiskItem::empty(len), Some(DiskItem::empty(self.len - len)))
+            (Self::empty(len), Some(Self::empty(self.len - len)))
         }
     }
 }
