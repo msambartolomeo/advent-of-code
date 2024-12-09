@@ -2,8 +2,8 @@ pub mod parser;
 
 #[derive(Debug, Clone, Copy)]
 pub struct DiskItem {
-    kind: BlockKind,
-    len: usize,
+    pub kind: BlockKind,
+    pub len: usize,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -13,6 +13,13 @@ pub enum BlockKind {
 }
 
 impl DiskItem {
+    pub const fn empty(len: usize) -> Self {
+        Self {
+            kind: BlockKind::Empty,
+            len,
+        }
+    }
+
     #[must_use]
     pub const fn is_block(&self) -> bool {
         matches!(self.kind, BlockKind::File(_))
@@ -25,14 +32,19 @@ impl DiskItem {
 
     #[must_use]
     pub const fn id(&self) -> u64 {
-        match self.kind {
-            BlockKind::Empty => 0,
-            BlockKind::File(id) => id,
-        }
+        self.kind.id()
     }
 
     pub fn fragments(&self) -> impl Iterator<Item = BlockKind> {
         std::iter::repeat(self.kind).take(self.len)
+    }
+
+    pub fn partition(self, len: usize) -> (Self, Option<Self>) {
+        if self.len <= len {
+            (self, None)
+        } else {
+            (DiskItem::empty(len), Some(DiskItem::empty(self.len - len)))
+        }
     }
 }
 
