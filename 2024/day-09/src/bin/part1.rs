@@ -1,5 +1,6 @@
 use anyhow::Result;
-use day_09::DiskItem;
+use day_09::BlockKind;
+use itertools::Itertools;
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -13,14 +14,16 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u64> {
-    let mut fs = day_09::parser::parse(input)?;
+    let fs = day_09::parser::parse(input)?;
 
-    let mut j = fs.len();
+    let mut fragments = fs.into_iter().flat_map(|ds| ds.fragments()).collect_vec();
 
-    for i in 0..fs.len() {
-        if fs[i].is_empty() {
-            if let Some(last) = last_block(&fs, j) {
-                j = last
+    let mut j = fragments.len();
+
+    for i in 0..fragments.len() {
+        if matches!(fragments[i], BlockKind::Empty) {
+            if let Some(last) = last_block(&fragments, j) {
+                j = last;
             } else {
                 break;
             }
@@ -28,11 +31,11 @@ fn process(input: &str) -> Result<u64> {
                 break;
             }
 
-            fs.swap(i, j);
+            fragments.swap(i, j);
         }
     }
 
-    let result = fs
+    let result = fragments
         .into_iter()
         .enumerate()
         .map(|(i, ds)| i as u64 * ds.id())
@@ -41,12 +44,12 @@ fn process(input: &str) -> Result<u64> {
     Ok(result)
 }
 
-fn last_block(v: &[DiskItem], start_from: usize) -> Option<usize> {
+fn last_block(v: &[BlockKind], start_from: usize) -> Option<usize> {
     v.iter()
         .enumerate()
         .rev()
         .skip(v.len() - start_from)
-        .find(|(_, ds)| ds.is_block())
+        .find(|(_, bk)| matches!(bk, BlockKind::File(_)))
         .map(|(i, _)| i)
 }
 

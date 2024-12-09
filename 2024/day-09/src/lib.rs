@@ -1,24 +1,47 @@
 pub mod parser;
 
 #[derive(Debug, Clone, Copy)]
-pub enum DiskItem {
-    EmptySpace { current: usize, len: u64 },
-    Block { id: u64, current: usize, len: u64 },
+pub struct DiskItem {
+    kind: BlockKind,
+    len: usize,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BlockKind {
+    Empty,
+    File(u64),
 }
 
 impl DiskItem {
-    pub fn is_block(&self) -> bool {
-        matches!(self, Self::Block { .. })
+    #[must_use]
+    pub const fn is_block(&self) -> bool {
+        matches!(self.kind, BlockKind::File(_))
     }
 
-    pub fn is_empty(&self) -> bool {
-        matches!(self, Self::EmptySpace { .. })
+    #[must_use]
+    pub const fn is_empty(&self) -> bool {
+        matches!(self.kind, BlockKind::Empty)
     }
 
-    pub fn id(&self) -> u64 {
+    #[must_use]
+    pub const fn id(&self) -> u64 {
+        match self.kind {
+            BlockKind::Empty => 0,
+            BlockKind::File(id) => id,
+        }
+    }
+
+    pub fn fragments(&self) -> impl Iterator<Item = BlockKind> {
+        std::iter::repeat(self.kind).take(self.len)
+    }
+}
+
+impl BlockKind {
+    #[must_use]
+    pub const fn id(&self) -> u64 {
         match self {
-            DiskItem::EmptySpace { .. } => 0,
-            DiskItem::Block { id, .. } => *id,
+            Self::Empty => 0,
+            Self::File(id) => *id,
         }
     }
 }
