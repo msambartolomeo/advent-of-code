@@ -18,7 +18,7 @@ fn process(input: &str) -> Result<u64> {
     let topographic_map = day_10::parser::parse(input)?;
 
     let result = topographic_map
-        .into_iter()
+        .iter()
         .map(|(idx, &n)| {
             if n == 0 {
                 trail_dfs(&topographic_map, idx)
@@ -60,7 +60,7 @@ fn trail_dfs(topographic_map: &Matrix<u64>, start: PairIndex) -> u64 {
             .for_each(|i| stack.push(i));
     }
 
-    return trail_tails.len() as u64;
+    trail_tails.len() as u64
 }
 
 #[cfg(test)]
