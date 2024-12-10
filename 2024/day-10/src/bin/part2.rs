@@ -1,5 +1,4 @@
 use anyhow::Result;
-use day_10::matrix::{Matrix, PairIndex};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -19,7 +18,7 @@ fn process(input: &str) -> Result<u64> {
         .iter()
         .map(|(idx, &n)| {
             if n == 0 {
-                trail_dfs(&topographic_map, idx)
+                day_10::trails_dfs(&topographic_map, idx)
             } else {
                 0
             }
@@ -27,33 +26,6 @@ fn process(input: &str) -> Result<u64> {
         .sum();
 
     Ok(result)
-}
-
-fn trail_dfs(topographic_map: &Matrix<u64>, start: PairIndex) -> u64 {
-    let mut stack = vec![start];
-    let mut trail_tails = 0;
-
-    while let Some(idx) = stack.pop() {
-        let current = topographic_map[idx];
-
-        if current == 9 {
-            trail_tails += 1;
-            continue;
-        }
-
-        idx.neighbors()
-            .into_iter()
-            .filter_map(|idx| {
-                let idx = idx?;
-
-                let n = *topographic_map.get(idx)?;
-
-                (n == current + 1).then_some(idx)
-            })
-            .for_each(|i| stack.push(i));
-    }
-
-    trail_tails
 }
 
 #[cfg(test)]
