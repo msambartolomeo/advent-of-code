@@ -23,6 +23,7 @@ pub struct Guard {
 pub struct Lookup(Vec<BTreeSet<usize>>);
 
 impl Lookup {
+    #[must_use]
     pub fn find_next(&self, context_index: usize, current_index: usize) -> Option<usize> {
         self.0[context_index]
             .lower_bound(Bound::Excluded(&current_index))
@@ -30,6 +31,7 @@ impl Lookup {
             .copied()
     }
 
+    #[must_use]
     pub fn find_prev(&self, context_index: usize, current_index: usize) -> Option<usize> {
         self.0[context_index]
             .upper_bound(Bound::Excluded(&current_index))
@@ -39,22 +41,25 @@ impl Lookup {
 }
 
 impl Guard {
-    fn new(position: (usize, usize)) -> Self {
+    const fn new(position: (usize, usize)) -> Self {
         Self {
             position,
             direction: Direction::North,
         }
     }
 
-    pub fn direction(&self) -> Direction {
+    #[must_use]
+    pub const fn direction(&self) -> Direction {
         self.direction
     }
 
-    pub fn x(&self) -> usize {
+    #[must_use]
+    pub const fn x(&self) -> usize {
         self.position.0
     }
 
-    pub fn y(&self) -> usize {
+    #[must_use]
+    pub const fn y(&self) -> usize {
         self.position.1
     }
 
@@ -66,20 +71,20 @@ impl Guard {
         let range = match old_direction {
             Direction::North => {
                 let p = std::mem::replace(&mut self.position.1, obstacle + 1);
-                obstacle + 1..=p
+                obstacle + 1..p - 1
             }
             Direction::South => {
                 let p = std::mem::replace(&mut self.position.1, obstacle - 1);
-                p..=obstacle - 1
+                p..obstacle
             }
 
             Direction::East => {
                 let p = std::mem::replace(&mut self.position.0, obstacle - 1);
-                p..=obstacle - 1
+                p..obstacle
             }
             Direction::West => {
                 let p = std::mem::replace(&mut self.position.0, obstacle + 1);
-                obstacle + 1..=p
+                obstacle + 1..p - 1
             }
         };
 
@@ -91,7 +96,7 @@ impl Guard {
 }
 
 impl Direction {
-    fn next(self) -> Self {
+    const fn next(self) -> Self {
         match self {
             Self::North => Self::East,
             Self::East => Self::South,

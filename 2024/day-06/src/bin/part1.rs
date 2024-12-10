@@ -1,7 +1,4 @@
-use std::{
-    collections::{HashMap, HashSet},
-    ops::RangeBounds,
-};
+use std::collections::HashSet;
 
 use anyhow::Result;
 use day_06::Direction;
