@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
 
-use crate::Matrix;
+use crate::matrix::Matrix;
 
 pub fn parse(input: &str) -> Result<Matrix<u64>> {
     let vec = input

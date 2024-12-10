@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use anyhow::Result;
-use day_10::{Matrix, PairIndex};
+use day_10::matrix::{Matrix, PairIndex};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -32,12 +32,10 @@ fn process(input: &str) -> Result<u64> {
 }
 
 fn trail_dfs(topographic_map: &Matrix<u64>, start: PairIndex) -> u64 {
-    let mut visited = HashSet::from([start]);
     let mut stack = vec![start];
     let mut trail_tails = HashSet::new();
 
     while let Some(idx) = stack.pop() {
-        visited.insert(idx);
         let current = topographic_map[idx];
 
         if current == 9 {
@@ -49,10 +47,6 @@ fn trail_dfs(topographic_map: &Matrix<u64>, start: PairIndex) -> u64 {
             .into_iter()
             .filter_map(|idx| {
                 let idx = idx?;
-                if visited.contains(&idx) {
-                    return None;
-                }
-
                 let n = *topographic_map.get(idx)?;
 
                 (n == current + 1).then_some(idx)
