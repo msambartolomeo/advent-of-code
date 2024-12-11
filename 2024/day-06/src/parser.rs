@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use anyhow::{bail, Context, Result};
 
-use crate::{Guard, Lookup};
+use crate::maze::{Guard, Lookup};
 
 pub fn parse(input: &str) -> Result<(Guard, Lookup, Lookup)> {
     let input = input.trim();
