@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use anyhow::Result;
-use day_06::Direction;
+use anyhow::{Context, Result};
+use day_06::{Direction, Guard, Lookup};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -15,8 +15,15 @@ fn main() -> Result<()> {
 
 #[inline]
 fn process(input: &str) -> Result<u64> {
-    let (mut guard, x_lookup, y_lookup, width, height) = day_06::parser::parse(input)?;
+    let (guard, x_lookup, y_lookup) = day_06::parser::parse(input)?;
 
+    let result = get_out(&x_lookup, &y_lookup, guard).context("Should find way out")?;
+
+    Ok(result)
+}
+
+#[must_use]
+pub fn get_out(x_lookup: &Lookup, y_lookup: &Lookup, mut guard: Guard) -> Option<u64> {
     let mut visited = HashSet::new();
 
     loop {
@@ -30,8 +37,8 @@ fn process(input: &str) -> Result<u64> {
         let Some(obstacle) = obstacle else {
             let range = match guard.direction() {
                 Direction::North | Direction::West => guard.advance(0),
-                Direction::South => guard.advance(height),
-                Direction::East => guard.advance(width),
+                Direction::South => guard.advance(x_lookup.len()),
+                Direction::East => guard.advance(y_lookup.len()),
             };
 
             for p in range {
@@ -46,9 +53,7 @@ fn process(input: &str) -> Result<u64> {
         }
     }
 
-    let result = visited.len() as u64;
-
-    Ok(result)
+    Some(visited.len() as u64)
 }
 
 #[cfg(test)]

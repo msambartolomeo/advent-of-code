@@ -38,6 +38,16 @@ impl Lookup {
             .prev()
             .copied()
     }
+
+    #[must_use]
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
 }
 
 impl Guard {
@@ -71,7 +81,7 @@ impl Guard {
         let range = match old_direction {
             Direction::North => {
                 let p = std::mem::replace(&mut self.position.1, obstacle + 1);
-                obstacle + 1..p - 1
+                obstacle + 1..p
             }
             Direction::South => {
                 let p = std::mem::replace(&mut self.position.1, obstacle - 1);
@@ -84,7 +94,7 @@ impl Guard {
             }
             Direction::West => {
                 let p = std::mem::replace(&mut self.position.0, obstacle + 1);
-                obstacle + 1..p - 1
+                obstacle + 1..p
             }
         };
 

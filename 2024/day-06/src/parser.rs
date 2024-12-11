@@ -4,7 +4,7 @@ use anyhow::{bail, Context, Result};
 
 use crate::{Guard, Lookup};
 
-pub fn parse(input: &str) -> Result<(Guard, Lookup, Lookup, usize, usize)> {
+pub fn parse(input: &str) -> Result<(Guard, Lookup, Lookup)> {
     let input = input.trim();
     let mut len_iter = input.lines();
     let width = len_iter.next().context("1 line")?.trim().len();
@@ -32,7 +32,5 @@ pub fn parse(input: &str) -> Result<(Guard, Lookup, Lookup, usize, usize)> {
         Guard::new(start.context("Must find start")?),
         Lookup(x_lookup),
         Lookup(y_lookup),
-        width,
-        height,
     ))
 }
