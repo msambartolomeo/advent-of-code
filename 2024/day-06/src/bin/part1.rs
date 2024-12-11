@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use day_06::{Direction, Guard, Lookup};
 
 fn main() -> Result<()> {
@@ -17,13 +17,13 @@ fn main() -> Result<()> {
 fn process(input: &str) -> Result<u64> {
     let (guard, x_lookup, y_lookup) = day_06::parser::parse(input)?;
 
-    let result = get_out(&x_lookup, &y_lookup, guard).context("Should find way out")?;
+    let result = get_out(&x_lookup, &y_lookup, guard);
 
     Ok(result)
 }
 
 #[must_use]
-pub fn get_out(x_lookup: &Lookup, y_lookup: &Lookup, mut guard: Guard) -> Option<u64> {
+pub fn get_out(x_lookup: &Lookup, y_lookup: &Lookup, mut guard: Guard) -> u64 {
     let mut visited = HashSet::new();
 
     loop {
@@ -53,7 +53,7 @@ pub fn get_out(x_lookup: &Lookup, y_lookup: &Lookup, mut guard: Guard) -> Option
         }
     }
 
-    Some(visited.len() as u64)
+    visited.len() as u64
 }
 
 #[cfg(test)]

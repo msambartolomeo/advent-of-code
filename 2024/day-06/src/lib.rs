@@ -5,7 +5,7 @@ use std::ops::Bound;
 
 pub mod parser;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Direction {
     North,
     South,
@@ -13,13 +13,13 @@ pub enum Direction {
     West,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Guard {
     position: (usize, usize),
     direction: Direction,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Lookup(Vec<BTreeSet<usize>>);
 
 impl Lookup {
@@ -37,6 +37,10 @@ impl Lookup {
             .upper_bound(Bound::Excluded(&current_index))
             .prev()
             .copied()
+    }
+
+    pub fn add(&mut self, context_index: usize, obstacle: usize) {
+        self.0[context_index].insert(obstacle);
     }
 
     #[must_use]
@@ -102,6 +106,10 @@ impl Guard {
             Direction::North | Direction::South => (position.0, n),
             Direction::East | Direction::West => (n, position.1),
         })
+    }
+
+    pub fn position(&self) -> (usize, usize) {
+        self.position
     }
 }
 

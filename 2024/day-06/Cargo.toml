@@ -15,3 +15,4 @@ missing_errors_doc = "allow"
 [dependencies]
 anyhow = "1.0.93"
 itertools = "0.13.0"
+rayon = "1.10.0"
