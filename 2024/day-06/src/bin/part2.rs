@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use anyhow::{Context, Result};
 use day_06::{Direction, Guard, Lookup};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 fn main() -> Result<()> {
     let input = include_str!("../../input.txt");
@@ -28,7 +29,7 @@ fn process(input: &str) -> Result<u64> {
     visited.remove(&guard.position());
 
     let result = visited
-        .into_iter()
+        .into_par_iter()
         .filter(|&(x, y)| {
             let mut x_lookup = x_lookup.clone();
             let mut y_lookup = y_lookup.clone();
